@@ -1,0 +1,335 @@
+{
+  "schema": "tested-cases-evidence/v1",
+  "level": "公开当前版本可复现",
+  "period": "2026-10-11",
+  "activation": "NOT_IN_FORCE",
+  "public_source_commit": "b20c1ba5a7e1c831f4573693b354c62504a969c0",
+  "actual_test_source_commit": "6e339a8e621a6d53d5a5ac90b5fbbab4a46f1ffa",
+  "source_equivalence": "pm 文件逐字节一致；本轮为文档更新，没有重跑完整运行时",
+  "environment": "Linux/WSL; Python standard library; Git; Node VM; synthetic reviewer; no external model",
+  "runs": [
+    {
+      "name": "protocol",
+      "status": "PASS",
+      "rc": 0
+    },
+    {
+      "name": "unconfigured-runtime-http",
+      "status": "PASS",
+      "rc": 0
+    },
+    {
+      "name": "architect-gates",
+      "status": "PASS",
+      "rc": 0
+    },
+    {
+      "name": "exception-recovery",
+      "status": "PASS",
+      "rc": 0
+    },
+    {
+      "name": "card-logic",
+      "status": "PASS",
+      "rc": 0
+    },
+    {
+      "name": "docker-governed-flow-and-regression",
+      "status": "BLOCKED",
+      "reason": "PINNED_IMAGE_UNAVAILABLE_NO_PULL"
+    }
+  ],
+  "run_counts": {
+    "PASS": 5,
+    "FAIL": 0,
+    "BLOCKED": 1
+  },
+  "protocol": {
+    "tests": 34,
+    "passed": 34,
+    "failed": 0
+  },
+  "suites": [
+    {
+      "name": "architect-gates",
+      "checks": [
+        {
+          "name": "large:missing-review",
+          "status": "PASS"
+        },
+        {
+          "name": "large:review-new-process",
+          "status": "PASS"
+        },
+        {
+          "name": "large:legal-control",
+          "status": "PASS"
+        },
+        {
+          "name": "binding:version",
+          "status": "PASS"
+        },
+        {
+          "name": "binding:scope",
+          "status": "PASS"
+        },
+        {
+          "name": "binding:base",
+          "status": "PASS"
+        },
+        {
+          "name": "binding:source_sha",
+          "status": "PASS"
+        },
+        {
+          "name": "repeat:first-error-legal",
+          "status": "PASS"
+        },
+        {
+          "name": "repeat:second-blocks",
+          "status": "PASS"
+        },
+        {
+          "name": "repeat:review-new-process",
+          "status": "PASS"
+        },
+        {
+          "name": "repeat:legal-control",
+          "status": "PASS"
+        },
+        {
+          "name": "repeat:old-epoch-stale",
+          "status": "PASS"
+        },
+        {
+          "name": "repeat:history-survives-successor",
+          "status": "PASS"
+        },
+        {
+          "name": "review:FAIL",
+          "status": "PASS"
+        },
+        {
+          "name": "review:TIMEOUT",
+          "status": "PASS"
+        },
+        {
+          "name": "review:expired",
+          "status": "PASS"
+        },
+        {
+          "name": "long:execute-before-close-legal",
+          "status": "PASS"
+        },
+        {
+          "name": "long:missing-review",
+          "status": "PASS"
+        },
+        {
+          "name": "long:review-is-not-acceptance",
+          "status": "PASS"
+        },
+        {
+          "name": "long:pre-acceptance-review-stale",
+          "status": "PASS"
+        },
+        {
+          "name": "long:legal-close-control",
+          "status": "PASS"
+        },
+        {
+          "name": "long:closed-with-separate-acceptance",
+          "status": "PASS"
+        },
+        {
+          "name": "roles:unavailable-stop",
+          "status": "PASS"
+        },
+        {
+          "name": "roles:explicit-verified-backup",
+          "status": "PASS"
+        },
+        {
+          "name": "review:file-tamper",
+          "status": "PASS"
+        }
+      ],
+      "counts": {
+        "PASS": 25,
+        "FAIL": 0,
+        "BLOCKED": 0
+      }
+    },
+    {
+      "name": "exception-recovery",
+      "checks": [
+        {
+          "name": "exception:dispatch-failure-recorded",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:same-occurrence-deduplicated",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:new-failure-same-request-counted",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:third-dispatch-blocked-by-repeat-gate",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:unknown-recovery-recorded-no-resend",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:unknown-recovery-deduplicated",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:successor-retains-error-history",
+          "status": "PASS"
+        },
+        {
+          "name": "exception:repeat-gate-blocks-across-version",
+          "status": "PASS"
+        }
+      ],
+      "counts": {
+        "PASS": 8,
+        "FAIL": 0,
+        "BLOCKED": 0
+      }
+    }
+  ],
+  "card_logic": {
+    "checks": 9,
+    "pass": true,
+    "browserRenderingTested": false
+  },
+  "unconfigured_runtime": {
+    "http_card": 200,
+    "status": "PENDING",
+    "approval": "BLOCKED_MODEL_NOT_CONFIGURED",
+    "outbox": 0
+  },
+  "source_code_hashes": [
+    {
+      "file": "pm/approval-card.html",
+      "sha256": "1b487700dd3e99a148a0f3a74a56c437e60a5e3178deac3a2a31b1d7d10a6742"
+    },
+    {
+      "file": "pm/approval_api.py",
+      "sha256": "1e4c00d6718b98276f31f34767ab56f5f58675852f17409d03149220e76d27fc"
+    },
+    {
+      "file": "pm/audit_public.py",
+      "sha256": "82c69943de411d0202aff944c4c082c695919dd87c857398cdb95e3572ecd9cc"
+    },
+    {
+      "file": "pm/bridge.py",
+      "sha256": "093c8a0130250ae78e3061ac3055d3b98381fea5a10672df5b6e2f6872f51f3a"
+    },
+    {
+      "file": "pm/card.js",
+      "sha256": "f4a206c7402ffd03425dd3cfe46b49b093c923ce5457a19796895ba567e40f39"
+    },
+    {
+      "file": "pm/check.py",
+      "sha256": "f77e51b32775a73fe671eed11459f58022d1340bc3077c218f0c6e61d6df40a4"
+    },
+    {
+      "file": "pm/container_task.py",
+      "sha256": "844f5ff693b88f24b41bf725e9bd116b5f5a45c242bd9d66f0bf4c1253ae5632"
+    },
+    {
+      "file": "pm/deny-tools.mjs",
+      "sha256": "2ecbf0ce96ddb5eed301f9160a7b61fa42cd8a5994f9b41d68dad66344d7dbc5"
+    },
+    {
+      "file": "pm/gate_cli.py",
+      "sha256": "615d6e4a221ac1b32616b5697fe2f81119d6958c230b5fb75099d33f289ac36a"
+    },
+    {
+      "file": "pm/governed_kernel.py",
+      "sha256": "62a893b602fa678d1f9e2150fbf7cc5d89f39f6603d0aca7486e0ceaa719e3fe"
+    },
+    {
+      "file": "pm/initialize.py",
+      "sha256": "d8d949a5a2ef318c3a7b88bf2651394f3fa0bda966033c7b15ee7b071bd57655"
+    },
+    {
+      "file": "pm/model_adapter.py",
+      "sha256": "635f59ff6655261fb9197e18667ff7802cc6d7402bf5974022f333102d76b0c0"
+    },
+    {
+      "file": "pm/next_kernel_v3.py",
+      "sha256": "e4b696a91768150a88fbb1449688d26b20f920cbf6628e052f961e5c3ab23b33"
+    },
+    {
+      "file": "pm/remote_store.py",
+      "sha256": "6fc4ddd2b1adfc73a988be7b455cf960fc5fa20ee65ac54115d5490879fe30b7"
+    },
+    {
+      "file": "pm/review_task.py",
+      "sha256": "041ce5586aff55545c4eee26ceadcad4ed0a8e9faad4943ecf3283f36111e664"
+    },
+    {
+      "file": "pm/reviewer_process.py",
+      "sha256": "186a7de9c2c6b4b00267280a1d220f249a48db7873b383a2dc547644dd1de342"
+    },
+    {
+      "file": "pm/role_dispatch.py",
+      "sha256": "a20870de1a26cf3098f913d3d05188554f2555eb30d3a0bf3ba8dced5db6c9be"
+    },
+    {
+      "file": "pm/roles_gate.py",
+      "sha256": "bbe83ac22624e8d5c598d13016feced7c0c31c1aee314bfdc334c7daad5b980d"
+    },
+    {
+      "file": "pm/run_validation.py",
+      "sha256": "c1b504d18e405fb228ffb19786dd877069b9d7181e6bafe4c1fc480c97a5af45"
+    },
+    {
+      "file": "pm/secured_kernel.py",
+      "sha256": "d6e56152b81fc31349595edac0b914a1efbe9db3cc70ad17472f5b9387ba81c0"
+    },
+    {
+      "file": "pm/synthetic_reviewer.py",
+      "sha256": "649bb58e09bab100180ce62af37cbb50aa00bb30f5fdbb1a75bb254b73bafb96"
+    },
+    {
+      "file": "pm/test_approval.py",
+      "sha256": "dbbe2c2b18ecda359b0f22463a7dc82947d0c8c4d4dfaa1c6836487f07125150"
+    },
+    {
+      "file": "pm/test_boundary.py",
+      "sha256": "5c751a1b648588ecaafaef5c61eed245c9136adb2b6f1f86d0104121c5351cc2"
+    },
+    {
+      "file": "pm/test_card.js",
+      "sha256": "8c4c6fc092b1b7ffc8749adb4e1a052df22815629d9b3290ae488189654f484f"
+    },
+    {
+      "file": "pm/test_exception_flow.py",
+      "sha256": "7e373f9be164a8773a8ccf7b8e216b311c768c8586a7df919e2ac813ce3a2677"
+    },
+    {
+      "file": "pm/test_governed_flow.py",
+      "sha256": "2e2b0e81ec42d3ccb7c0dc6ff3f98707bacc5ad4172ae2b552f79fcff9e079b2"
+    },
+    {
+      "file": "pm/test_public_boundaries.py",
+      "sha256": "3dfe0f8bc45ac527202725ca6b90cee968a06bdcaff04c211047399f60a92db1"
+    },
+    {
+      "file": "pm/test_roles_gate.py",
+      "sha256": "be9c16c232c2fb2f4a4225da03722fd9f98bd3674af7627d9f2430d44b57f063"
+    },
+    {
+      "file": "pm/verify_acceptance.py",
+      "sha256": "86a5686b741a98492fda29b4cfd29379d33a4edd33a6549e0f9955630d0325e0"
+    }
+  ]
+}

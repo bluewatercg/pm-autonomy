@@ -1,0 +1,754 @@
+{
+  "schema": "tested-cases-evidence/v1",
+  "level": "原隔离候选已跑但未等价迁移",
+  "activation": "NOT_IN_FORCE",
+  "public_source_commit": "b20c1ba5a7e1c831f4573693b354c62504a969c0",
+  "environment": "Isolated Linux synthetic Python/Git tasks; selected real model subprocesses; historical pinned Docker only",
+  "cases": [
+    {
+      "label": "four-task-2026-10-09",
+      "period": "2026-10-09",
+      "source_commit": null,
+      "source_provenance": "冻结候选源码快照，以 SHA-256 标识；未取得实际测试源码 Git commit",
+      "source_code_hashes": [
+        {
+          "file": "scenario-v4.py",
+          "sha256": "1271e0139afbb329ddd9c178f86349aa68679d663ca4995824e014bb43b11b36"
+        },
+        {
+          "file": "candidate_gate.py",
+          "sha256": "2ae7df88afd354cca991e1294bc46f445f6467d504a4c6b0c59055e528893b37"
+        },
+        {
+          "file": "audit-case-v3.py",
+          "sha256": "0c34c1c289b8bb7d4e8182f0139ac38b2dd919a28333459fc32197bd79aeb21f"
+        }
+      ],
+      "status": "PASS_ISOLATED_REAL_AGENT_CASE",
+      "selected_runs": {
+        "T1": "R1",
+        "T2": "R1",
+        "T3": "R1",
+        "T4": "R2"
+      },
+      "tasks": [
+        {
+          "task": "T1",
+          "status": "closed",
+          "items": {
+            "A1": "accepted"
+          },
+          "close_reason": "completed"
+        },
+        {
+          "task": "T2",
+          "status": "closed",
+          "items": {
+            "A1": "accepted"
+          },
+          "close_reason": "completed"
+        },
+        {
+          "task": "T3",
+          "status": "closed",
+          "items": {
+            "A1": "accepted",
+            "A2": "transferred"
+          },
+          "close_reason": "partial_transferred"
+        },
+        {
+          "task": "T4",
+          "status": "closed",
+          "items": {
+            "A2": "accepted"
+          },
+          "close_reason": "completed"
+        }
+      ],
+      "gate_counts": {
+        "PASS": 17,
+        "FAIL": 0,
+        "total": 17
+      },
+      "independent_audit_counts": {
+        "PASS": 82,
+        "FAIL": 0,
+        "total": 82
+      },
+      "audit_selection": [
+        {
+          "name": "four_tasks_closed",
+          "status": "PASS"
+        },
+        {
+          "name": "partial_transferred_A2",
+          "status": "PASS"
+        },
+        {
+          "name": "successor_A2_accepted",
+          "status": "PASS"
+        },
+        {
+          "name": "takeover_direction",
+          "status": "PASS"
+        },
+        {
+          "name": "improvement_links",
+          "status": "PASS"
+        },
+        {
+          "name": "dependency_links",
+          "status": "PASS"
+        },
+        {
+          "name": "T4_rejection_preserved",
+          "status": "PASS"
+        },
+        {
+          "name": "T4_fresh_independent_regression",
+          "status": "PASS"
+        },
+        {
+          "name": "final_project_binding",
+          "status": "PASS"
+        }
+      ],
+      "limits": [
+        "脚本预定义拆解、关系与转交；有人工修复",
+        "真实模型独立进程及上下文，同一 provider；不发布模型配置或原始输出",
+        "历史源码基线并非 Git HEAD；未等价迁移为公开通用四任务执行器"
+      ]
+    },
+    {
+      "label": "next-stage-2026-10-09",
+      "period": "2026-10-09",
+      "source_commit": null,
+      "source_provenance": "冻结候选快照，源码摘要，不编造测试 commit",
+      "source_code_hashes": [
+        {
+          "file": "next_kernel_v3.py",
+          "sha256": "d1b35521f48af45e11c9b1bf4e41af03faa2c6bc1b09b7262ebfcc2cf0973ec4"
+        }
+      ],
+      "all_record_counts": {
+        "PASS": 66,
+        "FAIL": 2,
+        "BLOCKED": 0
+      },
+      "selected_checks": [
+        {
+          "name": "intake:optimization",
+          "status": "FAIL"
+        },
+        {
+          "name": "recovery:model_response_crash_cached",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:model_call_unknown_no_resend",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:model_launch_boundary",
+          "status": "PASS"
+        },
+        {
+          "name": "auth:self_reported_role",
+          "status": "PASS"
+        },
+        {
+          "name": "auth:expired",
+          "status": "PASS"
+        },
+        {
+          "name": "auth:binding_path",
+          "status": "PASS"
+        },
+        {
+          "name": "auth:HMAC_tamper",
+          "status": "PASS"
+        },
+        {
+          "name": "auth:actual_HEAD_drift_rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:failed_acceptance_no_early_close",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:request_idempotency",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:request_payload_conflict",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_after_intent",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_before_replace",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_after_replace",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_before_event",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_after_event",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_before_acceptance",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_after_test_evidence",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_after_acceptance",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_before_close",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:os_exit_after_close",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery:full_event_hash_chain",
+          "status": "PASS"
+        },
+        {
+          "name": "successor:intake_first-v3",
+          "status": "FAIL"
+        }
+      ],
+      "selection_counts": {
+        "PASS": 22,
+        "FAIL": 2,
+        "BLOCKED": 0
+      },
+      "limits": [
+        "历史 2 FAIL 保留；自然语言和主体授权为 PARTIAL",
+        "仅合成 Git/worktree；同 UID 可绕过，非账户认证",
+        "真实进程中断不等于断电或外部 provider exactly-once"
+      ]
+    },
+    {
+      "label": "successor-2026-10-10",
+      "period": "2026-10-10",
+      "source_commit": null,
+      "source_provenance": "冻结 v5 intake / v3 isolation 快照，以源码摘要标识",
+      "source_code_hashes": [
+        {
+          "file": "intake_v5.py",
+          "sha256": "93eede7bac78e3018c475e1b93929220289d65a436278267c5393543c137ab18"
+        },
+        {
+          "file": "docker_fixture_v3.py",
+          "sha256": "ce6792431ce9f2bc7eca3f230a2844b0dc69bd7124432fa0865721566640522b"
+        },
+        {
+          "file": "container_verify.py",
+          "sha256": "7b1d49c36b9f128e682a46e17f4db69ffe5589ec755fabd3599e6eccd2c27ce6"
+        }
+      ],
+      "all_record_counts": {
+        "PASS": 44,
+        "FAIL": 6,
+        "BLOCKED": 2
+      },
+      "intake_v5": {
+        "checks": [
+          {
+            "name": "v5:intake:first-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:optimization-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:ambiguous-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:destructive-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:adversarial-fake-baseline-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:adversarial-fake-approval-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:contradictory-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:adversarial-scope-v5",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:first-with-baseline",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:iteration-without-baseline",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:fabricated-contract",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:scope-escape",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:cyclic-dependency",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:ambiguity-with-task",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:destructive-without-replacement",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:invalid-kind",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:contract:context-sha",
+            "status": "PASS"
+          },
+          {
+            "name": "v5:intake:private-bindings",
+            "status": "PASS"
+          }
+        ],
+        "counts": {
+          "PASS": 18,
+          "FAIL": 0,
+          "BLOCKED": 0
+        },
+        "real_model_cases": 8
+      },
+      "cross_uid_docker_v3": {
+        "checks": [
+          {
+            "name": "docker-v3:auth:actual-trusted-distinct-peer",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:auth:actual-cross-subject-request-denied",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:auth:key-config-and-direct-files-unreadable-unwritable",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:git:cross-uid-authorized-execution-idempotent",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:recovery:failed-acceptance-remains-open",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:recovery:after_replace",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:recovery:after_acceptance",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:verification:events-head-artifact-acceptance-bindings",
+            "status": "PASS"
+          },
+          {
+            "name": "docker-v3:verification:independent-readonly-process",
+            "status": "PASS"
+          }
+        ],
+        "counts": {
+          "PASS": 9,
+          "FAIL": 0,
+          "BLOCKED": 0
+        }
+      },
+      "limits": [
+        "18/18 不是四任务报告的 gate 17/17，也不是公开当前运行时结果",
+        "测试授权为 harness fixture，不是真人审批",
+        "不同 OS UID 边界，不抵抗同 UID/root/Docker 管理者",
+        "公开版本未等价迁移此 Docker 闭环"
+      ]
+    },
+    {
+      "label": "approval-architect-v8-2026-10-11",
+      "period": "2026-10-11",
+      "source_commit": null,
+      "source_provenance": "冻结 v8 候选快照，未宣称等价迁移为公开当前 Docker/模型验收",
+      "source_code_hashes": [
+        {
+          "file": "approval_api.py",
+          "sha256": "f39fcfd2b2fc834243d719d4a08baa5e7ce41bdc0a0c2eb535f49bda22eef3f9"
+        },
+        {
+          "file": "roles_gate.py",
+          "sha256": "3ea8dfefee6f00d102d62811f75bba0e174fabd62cca5c790351ad5717dfe188"
+        },
+        {
+          "file": "secured_kernel.py",
+          "sha256": "a2af34e8eee5ea3aa2223009d818bd4edd51d7e8b9688bbb14329eee26ad2f4f"
+        },
+        {
+          "file": "governed_kernel.py",
+          "sha256": "5403a0ee1e4024026ed4be4d3abd6ef46494a1c20ce09a8c3458091605599565"
+        },
+        {
+          "file": "verify_acceptance.py",
+          "sha256": "86a5686b741a98492fda29b4cfd29379d33a4edd33a6549e0f9955630d0325e0"
+        },
+        {
+          "file": "test_roles_gate.py",
+          "sha256": "ba17c5186d687b0c56713e64da8dc605153f147cb17b6684efefd1e2c3c6fa1e"
+        }
+      ],
+      "suites": [
+        {
+          "name": "gate-test-results.json",
+          "checks": [
+            {
+              "name": "large:missing-review",
+              "status": "PASS"
+            },
+            {
+              "name": "large:review-new-process",
+              "status": "PASS"
+            },
+            {
+              "name": "large:legal-control",
+              "status": "PASS"
+            },
+            {
+              "name": "binding:version",
+              "status": "PASS"
+            },
+            {
+              "name": "binding:scope",
+              "status": "PASS"
+            },
+            {
+              "name": "binding:base",
+              "status": "PASS"
+            },
+            {
+              "name": "binding:source_sha",
+              "status": "PASS"
+            },
+            {
+              "name": "repeat:first-error-legal",
+              "status": "PASS"
+            },
+            {
+              "name": "repeat:second-blocks",
+              "status": "PASS"
+            },
+            {
+              "name": "repeat:review-new-process",
+              "status": "PASS"
+            },
+            {
+              "name": "repeat:legal-control",
+              "status": "PASS"
+            },
+            {
+              "name": "repeat:old-epoch-stale",
+              "status": "PASS"
+            },
+            {
+              "name": "repeat:history-survives-successor",
+              "status": "PASS"
+            },
+            {
+              "name": "review:FAIL",
+              "status": "PASS"
+            },
+            {
+              "name": "review:TIMEOUT",
+              "status": "PASS"
+            },
+            {
+              "name": "review:expired",
+              "status": "PASS"
+            },
+            {
+              "name": "long:execute-before-close-legal",
+              "status": "PASS"
+            },
+            {
+              "name": "long:missing-review",
+              "status": "PASS"
+            },
+            {
+              "name": "long:review-is-not-acceptance",
+              "status": "PASS"
+            },
+            {
+              "name": "long:pre-acceptance-review-stale",
+              "status": "PASS"
+            },
+            {
+              "name": "long:legal-close-control",
+              "status": "PASS"
+            },
+            {
+              "name": "long:closed-with-separate-acceptance",
+              "status": "PASS"
+            },
+            {
+              "name": "roles:unavailable-stop",
+              "status": "PASS"
+            },
+            {
+              "name": "roles:explicit-verified-backup",
+              "status": "PASS"
+            },
+            {
+              "name": "review:file-tamper",
+              "status": "PASS"
+            }
+          ],
+          "counts": {
+            "PASS": 25,
+            "FAIL": 0,
+            "BLOCKED": 0
+          }
+        },
+        {
+          "name": "governed-flow-results.json",
+          "checks": [
+            {
+              "name": "approval:large-plan-missing-review-denied",
+              "status": "PASS"
+            },
+            {
+              "name": "approval:large-plan-new-review-process",
+              "status": "PASS"
+            },
+            {
+              "name": "approval:legal-control",
+              "status": "PASS"
+            },
+            {
+              "name": "execution:real-docker-acceptance-blocks-without-closeout",
+              "status": "PASS"
+            },
+            {
+              "name": "acceptance:exported-result-tamper-denied",
+              "status": "PASS"
+            },
+            {
+              "name": "acceptance:runtime-raw-tamper-denied",
+              "status": "PASS"
+            },
+            {
+              "name": "acceptance:legal-recomputation",
+              "status": "PASS"
+            },
+            {
+              "name": "close:independent-bound-review",
+              "status": "PASS"
+            },
+            {
+              "name": "recovery:completed-result-after-authority-expiry-no-resend",
+              "status": "PASS"
+            },
+            {
+              "name": "close:repeat-cached",
+              "status": "PASS"
+            },
+            {
+              "name": "recovery:actual-process-exit87-result-cache",
+              "status": "PASS"
+            },
+            {
+              "name": "recovery:governance-successor-before-active-crash",
+              "status": "PASS"
+            },
+            {
+              "name": "bootstrap:destructive-unconfigured-denied",
+              "status": "PASS"
+            }
+          ],
+          "counts": {
+            "PASS": 13,
+            "FAIL": 0,
+            "BLOCKED": 0
+          }
+        },
+        {
+          "name": "exception-flow-results.json",
+          "checks": [
+            {
+              "name": "exception:dispatch-failure-recorded",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:same-occurrence-deduplicated",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:new-failure-same-request-counted",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:third-dispatch-blocked-by-repeat-gate",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:unknown-recovery-recorded-no-resend",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:unknown-recovery-deduplicated",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:successor-retains-error-history",
+              "status": "PASS"
+            },
+            {
+              "name": "exception:repeat-gate-blocks-across-version",
+              "status": "PASS"
+            }
+          ],
+          "counts": {
+            "PASS": 8,
+            "FAIL": 0,
+            "BLOCKED": 0
+          }
+        },
+        {
+          "name": "results.json",
+          "checks": [
+            {
+              "name": "protocol:standard-library-unittest",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:signature-forgery-denied",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:binding-scope",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:binding-base",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:binding-actions",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:binding-source_sha",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:expired-receipt",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:source-drift",
+              "status": "PASS"
+            },
+            {
+              "name": "bridge:actual-git-head-drift",
+              "status": "PASS"
+            },
+            {
+              "name": "e2e:normal-approval-real-git-cross-uid-recovery",
+              "status": "PASS"
+            },
+            {
+              "name": "e2e:separate-destructive-capability-real-git",
+              "status": "PASS"
+            },
+            {
+              "name": "e2e:version-old-receipt-invalidated",
+              "status": "PASS"
+            },
+            {
+              "name": "recovery:unknown-dispatch-no-resend",
+              "status": "PASS"
+            },
+            {
+              "name": "recovery:real-approval-process-exit87",
+              "status": "PASS"
+            },
+            {
+              "name": "recovery:version-sync-transaction-interruption",
+              "status": "PASS"
+            },
+            {
+              "name": "pending:real-task-no-human-approval-no-outbox",
+              "status": "PASS"
+            }
+          ],
+          "counts": {
+            "PASS": 16,
+            "FAIL": 0,
+            "BLOCKED": 0
+          }
+        }
+      ],
+      "scenario_counts": {
+        "PASS": 62,
+        "FAIL": 0
+      },
+      "protocol_tests": 27,
+      "card_logic_checks": 9,
+      "independent_checks": 32,
+      "human_pending": {
+        "status": "PENDING",
+        "version": 1,
+        "decisions": 0,
+        "outbox": 0,
+        "sessions": 0
+      },
+      "architect_observation": {
+        "real_provider_rc": 0,
+        "verdict": "PASS"
+      },
+      "browser_visual_tested": false,
+      "limits": [
+        "真实 architect 语义审查不同于 gate 的 synthetic reviewer",
+        "正式 human 任务仍 PENDING；自动测试身份标签不证明真人批准",
+        "62 场景与27单测、9页面、32复算是不同层，不相加",
+        "历史候选 Docker 成功不代表公开环境 Docker 已通过"
+      ]
+    }
+  ]
+}
