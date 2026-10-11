@@ -1,0 +1,41 @@
+schema: pm-public-candidate/v1
+name: pm-autonomy
+version: 0.1.0-candidate
+status: CANDIDATE
+activation: NOT_IN_FORCE
+identity: pm-autonomy-candidate
+source_of_truth: [PM_MANIFEST.yaml, RULES.md]
+boundary:
+  purpose: Independent approval, role governance, runtime gate, acceptance and recovery candidate
+  business_import: false
+  old_git_history_import: false
+  deployment_authorization: REQUIRED_SEPARATELY
+runtime:
+  platform: Linux-or-WSL
+  python: '>=3.10'
+  state: external-private-runtime-directory
+  host: loopback-only
+  model_adapter: external-OMP-env-config
+  unconfigured_model: BLOCKED
+  container: externally-prepared-pinned-image
+  allowed_write_scope: [history.py]
+roles: [pm, explorer, researcher, worker, architect, verifier]
+architect_triggers: [large_plan_before_approval, repeated_similar_error, long_task_closeout]
+implementation_status:
+  approval_api: IMPLEMENTED
+  role_configuration_and_advisory_dispatch: IMPLEMENTED_EXTERNAL_ADAPTER_REQUIRED
+  architect_runtime_gates: IMPLEMENTED
+  cross_uid_broker: IMPLEMENTED_CONTAINER_VALIDATION_BLOCKED_IMAGE_UNAVAILABLE
+  independent_acceptance: IMPLEMENTED_CONTAINER_VALIDATION_BLOCKED_IMAGE_UNAVAILABLE
+  recovery_and_idempotency: IMPLEMENTED_PROTOCOL_VERIFIED
+  natural_language_intake: IMPLEMENTED_FOR_SYNTHETIC_SCOPE_EXTERNAL_MODEL_REQUIRED
+  generic_business_execution: NOT_SUPPORTED
+  fully_automatic_requirement_to_code: NOT_CONNECTED
+  production_promotion: DESIGN_ONLY
+  existing_project_single_writer_lease: NOT_IMPLEMENTED
+validation:
+  real_model_review: NOT_RUN
+  protocol_and_boundary_tests: VERIFIED
+  architect_tests: SYNTHETIC_FIXTURE_VERIFIED
+  docker_e2e: BLOCKED_PINNED_IMAGE_UNAVAILABLE
+  production_deployable: false

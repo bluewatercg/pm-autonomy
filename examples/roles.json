@@ -1,0 +1,59 @@
+{
+  "schema": "isolated-role-config/v1",
+  "roles": {
+    "pm": {
+      "model": "",
+      "effort": "medium",
+      "capabilities": [
+        "propose",
+        "request_approval"
+      ]
+    },
+    "explorer": {
+      "model": "",
+      "effort": "low",
+      "capabilities": [
+        "read",
+        "summarize"
+      ]
+    },
+    "researcher": {
+      "model": "",
+      "effort": "medium",
+      "capabilities": [
+        "read",
+        "research"
+      ]
+    },
+    "worker": {
+      "model": "",
+      "effort": "high",
+      "capabilities": [
+        "execute_approved"
+      ]
+    },
+    "architect": {
+      "model": "",
+      "effort": "high",
+      "capabilities": [
+        "review_plan",
+        "review_recurrence",
+        "review_closeout"
+      ]
+    },
+    "verifier": {
+      "model": "",
+      "effort": "medium",
+      "capabilities": [
+        "verify_evidence"
+      ]
+    }
+  },
+  "model_policy": {
+    "verified_models": [],
+    "unavailable_model_action": "STOP_AND_REQUIRE_EXPLICIT_BACKUP",
+    "backup_model": null,
+    "credentials": "not included"
+  },
+  "identity_policy": "role is loaded from this bound configuration; request self-reported role is rejected"
+}
