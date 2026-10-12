@@ -3,7 +3,7 @@
 const fs=require('node:fs'), vm=require('node:vm'), assert=require('node:assert');
 const root=__dirname;
 const proposal=JSON.parse(fs.readFileSync(root+'/pending-proposal.json','utf8'));
-const ids=['status','proposal','connection','register','holder','approve','change','reject','execute','message','note','offline-proposal'];
+const ids=['status','proposal','connection','register','holder','approve','change','reject','execute','message','note','offline-proposal','fusion-refresh','fusion-pause','fusion-configure','fusion-level','fusion-project','fusion-environment','fusion-state','fusion-summary'];
 const elements=Object.fromEntries(ids.map(id=>[id,{textContent:'',disabled:true,checked:false,value:''}]));
 elements['offline-proposal'].textContent=JSON.stringify(proposal);
 const context={document:{getElementById:id=>elements[id]},location:{protocol:'file:',hash:'',pathname:'/'},URLSearchParams,window:{},JSON,console};

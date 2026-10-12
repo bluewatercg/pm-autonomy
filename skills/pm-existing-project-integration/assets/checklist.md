@@ -24,6 +24,13 @@
 - [ ] 回退先停新派发、查在途、撤销授权再移交
 - [ ] 未删除旧证据、未覆盖并发业务修改
 
+- [ ] 默认 L1/L0 无业务接管，通用 adapter 和 L3 缺失 BLOCKED
+- [ ] 观察/控制 scope、project/environment/task/actor 有显式绑定
+- [ ] 暂停/降级 epoch 撤销旧授权与未启动 outbox，历史保留
+- [ ] 本地 normal 停止不依赖模型/architect；停止失败持久 UNKNOWN，旧 permit 未结束不宣称干净暂停
+- [ ] pause 显示 dispatch_stopped/write_quiescent/handoff_required；每次 begin 缺历史零 permit，recover QUEUED 拒绝
+- [ ] 未知结果不重派，不用合成 fence 代替业务单写移交证据
+
 试点结论：PASS / PARTIAL / BLOCKED
 影子范围：
 移交范围与owner：

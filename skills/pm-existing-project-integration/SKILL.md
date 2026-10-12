@@ -23,6 +23,9 @@ agent_created: true
 ## 历史未确定需求
 把旧聊天中的想法与有效批准分别核对。仅在授权私有 runtime 中逐条登记 requirement_id、source.ref、带时区 source.time、source.uncertain 和目标；时间或来源无法核实先澄清，不猜测已同意。讨论追加，拒绝/暂缓须理由，取代指向现存需求且无环。after_task 只引用已接入可信注册表的任务，旧台账自报完成不能代替持久 acceptance/close。需求转换只登记待审批提案，不移交单写权或派业务任务；公开运行时仍限定已有 history.py 合成合同，见仓库 docs/REQUIREMENTS-POOL.md。runtime、个人状态、完整聊天和 archive 投影不上传，现役服务不受此步骤影响。
 
+## 融合档位与移交
+以 L0/L1 只读或协作盘点提出接入提案；本运行时没有通用业务 adapter，项目参数不是业务接管入口。当前 L2 仅 synthetic-history / history.py / dev，必须负责人 normal 能力显式绑定 observation_scope、control_scope、environment、task、actor；L3 流程未实现，BLOCKED。暂停或降级先使 epoch 失效并撤销 QUEUED/RESERVED，再核对仍 RUNNING/UNKNOWN 的范围及旧写者。fusion_cli.py pause 不依赖模型/architect 或 approval.lock；停止失败持久 UNKNOWN 后有界释放 fence，旧 permit 未确认结束则 write_quiescent=false/handoff_required=true，暂停返回仍可能旧写，不能称干净交接。每次 begin/verify 缺三表或初始事件零 permit、不重建；recover QUEUED 返回 RECOVERY_NOT_STARTED，不首次启动。UNKNOWN 没有强制解除接口，不重新派发。新旧业务单写移交仍需独立实现和验收，不能用本合成 fence 宣称业务已经停写。
+
 ## 必须阻塞
 遇到未知在途执行、无法隔离、有效规则冲突、基线漂移未裁决、旧写者未停、审批不可信、恢复无法确定结果时暂停受影响范围。外部调用未知保持blocked_unknown。配置和提示词不等于硬闸门；模型角色不授予权限。
 

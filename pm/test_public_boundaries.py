@@ -57,6 +57,8 @@ class PublicBoundaryTests(unittest.TestCase):
         root=Path(__file__).resolve().parent;p=bridge.read_proposal(root);key=(root/'private/bridge-key.bin').read_bytes()
         s=approval_api.Store(root/'private/public-boundary-approval',p,key,lambda card:bridge.baseline(root),lambda receipt:None,lambda new:None,gate=lambda card,phase:None)
         sid,csrf=s.register({'capability':s.bootstrap_capability(),'challenge':s.challenge,'confirm_capability_holder':True})
+        from test_approval import authorize_l2
+        authorize_l2(s,sid,csrf)
         card=s.card();d={'request_id':'test-unknown-boundary','decision':'approve','version':p['version'],'proposal_hash':card['proposal_hash'],'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':''}
         s.decide(sid,csrf,d)
         with s.connect() as con:r=json.loads(con.execute('SELECT receipt FROM outbox').fetchone()[0])

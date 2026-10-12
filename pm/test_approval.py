@@ -8,12 +8,22 @@ class FakeRemote:
     def baseline(self,card):self.calls.append(('baseline',card['version']));return {'base':card['base'],'before_sha':card['before_sha']}
     def sync(self,p):self.calls.append(('sync',p['version']));return {'ok':True}
     def dispatch(self,r):self.calls.append(('dispatch',r['body']['request_id']));return {'ok':True,'synthetic':True,'request_id':r['body']['request_id']}
+def authorize_l2(store,sid,csrf):
+    import fusion
+    p=store.card()['proposal']
+    with store.connect() as con:
+        con.execute('BEGIN IMMEDIATE')
+        value=fusion.state(con)
+        session=next((v for v in store.sessions.values() if v['subject']==value['owner']),store.session(sid))
+        fusion.change(con,session,{'operation':'configure','expected_epoch':value['epoch'],'level':'L2','project':fusion.PROJECT,'environment':fusion.ENVIRONMENT,'observation_scope':['history.py'],'control_scope':['history.py'],'tasks':[p['task']],'actors':list(set(value['actors']+[store.session(sid)['subject']]))})
+
 class ApprovalTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name);self.fake=FakeRemote(self.root);self.key=secrets.token_bytes(32)
-        self.proposal={'schema':'approval-proposal/v1','task':'SYNTHETIC-APPROVAL-001','version':1,'goal':'升序返回记录副本','scope':['history.py'],'base':'base-abc','before_sha':'before-abc','source_sha':'source-abc','expiry':time.time()+3600,'actions':['edit'],'change':'normal','risk':['仅合成'],'acceptance':['固定验收'],'relation':'task52 successor'}
+        self.proposal={'schema':'approval-proposal/v1','task':'SYNTHETIC-APPROVAL-001','version':1,'goal':'升序返回记录副本','scope':['history.py'],'base':'base-abc','before_sha':'before-abc','source_sha':'source-abc','expiry':time.time()+3600,'actions':['edit'],'change':'normal','risk':['仅合成'],'acceptance':['固定验收'],'relation':'task52 successor','project':'synthetic-history','environment':'dev / isolated synthetic Docker'}
         self.store=Store(self.root,self.proposal,self.key,self.fake.baseline,self.fake.dispatch,self.fake.sync)
         self.token=self.store.bootstrap_capability(); self.sid,self.csrf=self.store.register({'capability':self.token,'challenge':self.store.challenge,'confirm_capability_holder':True})
+        authorize_l2(self.store,self.sid,self.csrf)
     def decision(self,**kw):
         p=self.store.card()['proposal'];return self.store.decide(self.sid,self.csrf,{'request_id':kw.get('request_id','req-0001'),'decision':kw.get('decision','approve'),'version':p['version'],'proposal_hash':self.store.card()['proposal_hash'],'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':kw.get('note','')})
     def test_pending_is_initial_and_registration_requires_actual_confirmation(self):

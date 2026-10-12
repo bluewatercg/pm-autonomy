@@ -23,6 +23,9 @@ agent_created: true
 ## 未确定需求接入
 在独立 runtime 的需求池先登记未确定想法：独立 requirement_id、来源引用/带时区时点/uncertain、目标、可空负责人和优先级、待解决问题。追加讨论，暂缓与拒绝须理由。after_task 仅引用现存可信任务，查询按持久验收闭合判定就绪；满足条件不提醒、不批准、不执行。确定后通过现有会话和 scope/version 绑定转换为待审批提案，保留双向关联。当前实现仅支持既有 history.py 合成合同，见仓库 docs/REQUIREMENTS-POOL.md；不要把通用业务想法说成已接通执行器。runtime 和 archive 不提交，技能接入不等于安装或激活。
 
+## 融合档位
+默认 L1，只允许讨论和待审批提案；L0 只读 PM 状态。负责人 normal 能力通过真实 `/api/fusion` 或 `fusion_cli.py` 显式配置 L2，绑定 project、观察/控制 scope、environment、task 和 actor；配置不等于任务批准，批准后仍单独执行。当前仅 synthetic-history / history.py / dev 合成 adapter，未知项目和 L3 流程一律 BLOCKED，生产权限不随档位升级。暂停/降级递增 SQLite epoch 并撤销未启动授权；启动和 broker 写入重核 epoch。暂停入口不依赖模型或 architect；停止失败持久 UNKNOWN 后有界释放 fence，旧 permit 未确认结束则 write_quiescent=false/handoff_required=true，不能称干净暂停。每次 begin/verify 缺三表或初始事件零 permit、不重建；recover QUEUED 返回 RECOVERY_NOT_STARTED，已有结果恢复不首次启动。RUNNING/UNKNOWN 保留交接，未知不重派。见 README 融合操作及 docs/evidence/fusion-control.json，完整 Docker 闭环不得用 fixture PASS 代替。
+
 ## 安全和恢复
 保留追加历史与冻结证据，纠正建successor。运行中断先查持久化记录；外部模型调用结果不明时标blocked_unknown，不盲重发。审批身份、操作系统UID与沙箱能力分开记录；同UID或管理员越权边界不得隐去。不得伪造用户审批、自动扩大scope或把测试批准用于真实任务。
 

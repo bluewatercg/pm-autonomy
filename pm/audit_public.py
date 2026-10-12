@@ -13,7 +13,8 @@ def classify(entries):
     return {name:sum(bool(re.search(pattern,data.decode(errors='replace'))) for data in entries.values()) for name,pattern in PATTERNS.items()}
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',default=str(Path(__file__).resolve().parent.parent));p.add_argument('--report',required=True);a=p.parse_args();root=Path(a.root).resolve()
-    files={str(f.relative_to(root)).replace('\\','/'):f.read_bytes() for f in root.rglob('*') if f.is_file() and '.git' not in f.relative_to(root).parts}
+    names=subprocess.check_output(['git','-C',str(root),'ls-files','--cached','--others','--exclude-standard']).decode().splitlines() if (root/'.git').exists() else [str(f.relative_to(root)).replace('\\','/') for f in root.rglob('*') if f.is_file()]
+    files={name:(root/name).read_bytes() for name in names}
     allowed=set(json.loads((root/'PUBLIC_FILES.json').read_bytes())['files']);assert set(files)==allowed,'PUBLIC_TREE_WHITELIST_MISMATCH'
     imports=[]
     for name,data in files.items():
@@ -33,7 +34,7 @@ def main():
             assert set(names)==historical_allowed,'HISTORY_TREE_WHITELIST_MISMATCH'
             for name in names:history[commit+':'+name]=git('show',commit+':'+name)
             history[commit+':metadata']=git('show','-s','--format=fuller',commit)
-        tracked=git('ls-files').decode().splitlines();assert set(tracked)==allowed,'INDEX_WHITELIST_MISMATCH'
+        tracked=git('ls-files','--cached','--others','--exclude-standard').decode().splitlines();assert set(tracked)==allowed,'CANDIDATE_WHITELIST_MISMATCH'
     result={'public_file_count':len(files),'whitelist_match':True,'working_tree_counts':classify(files),'history_entry_count':len(history),'history_counts':classify(history),'private_imports':0,'hashes':{name:hashlib.sha256(data).hexdigest() for name,data in files.items()}}
     Path(a.report).write_text(json.dumps(result,ensure_ascii=False,indent=2));print(json.dumps({k:v for k,v in result.items() if k!='hashes'}))
 if __name__=='__main__':main()

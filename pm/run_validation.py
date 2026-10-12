@@ -24,7 +24,7 @@ private=R/'private/tests';private.mkdir(mode=0o700)
 fixtures={}
 def fixture(name,change='normal'):
     root=private/name;root.mkdir(mode=0o700);(root/'private').mkdir(mode=0o700)
-    for n in ['next_kernel_v3.py','secured_kernel.py','container_task.py','model_adapter.py','candidate-history.py','synthetic.bundle']:shutil.copyfile(R/n,root/n)
+    for n in ['next_kernel_v3.py','secured_kernel.py','container_task.py','model_adapter.py','candidate-history.py','synthetic.bundle','fusion.py']:shutil.copyfile(R/n,root/n)
     command(['git','clone',str(root/'synthetic.bundle'),str(root/'synthetic-repo')]);command(['git','-C',str(root/'synthetic-repo'),'remote','remove','origin'])
     p=json.loads((R/'pending-proposal.json').read_bytes());p.pop('governance_policy',None);p.update(task='TEST-'+name.upper(),expiry=time.time()+1800,change=change)
     p['source']={**p['source'],'request':'SYNTHETIC_TEST_BOUNDARY_ONLY: 自动回归不是人类批准'}
@@ -37,7 +37,10 @@ def fixture(name,change='normal'):
     return root,p,key,s
 
 def register(s,priv='normal'):
-    return s.register({'capability':s.bootstrap_capability(priv),'challenge':s.challenge,'confirm_capability_holder':True})
+    sid,csrf=s.register({'capability':s.bootstrap_capability(priv),'challenge':s.challenge,'confirm_capability_holder':True})
+    from test_approval import authorize_l2
+    authorize_l2(s,sid,csrf)
+    return sid,csrf
 def decision(s,action='approve',rid='test-request-0001'):
     c=s.card();p=c['proposal']
     return {'request_id':rid,'decision':action,'version':p['version'],'proposal_hash':c['proposal_hash'],'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':'补充方案验收' if action=='change' else ''}
@@ -108,9 +111,10 @@ def real_interruption():
     proc=subprocess.run([sys.executable,'-I','-c',code],capture_output=True,timeout=20);assert proc.returncode==87
     recovered=remote_store.load_store(root)
     with recovered.connect() as con:phase=con.execute('SELECT phase FROM outbox').fetchone()[0]
-    assert phase=='DISPATCHING';out=recovered.execute(sid,csrf,d['request_id']);assert out['ok'],out
-    saved('synthetic-recovery-result.json',out)
-    return {'actual_crash_rc':87,'durable_phase':phase,'same_request_recovered':True}
+    assert phase=='DISPATCHING'
+    denied=expect('DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND',lambda:recovered.execute(sid,csrf,d['request_id']))
+    saved('synthetic-recovery-result.json',denied)
+    return {'actual_crash_rc':87,'durable_phase':phase,'unknown_no_resend':True}
 record('recovery:real-approval-process-exit87',real_interruption)
 
 def version_crash():

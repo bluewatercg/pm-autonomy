@@ -12,7 +12,7 @@
 | **原隔离候选已跑但未等价迁移** | 原独立报告、结果及源码快照逐项核对，公开仅白名单摘要；真实模型或容器测试属于当时候选 | 不能把历史 PASS 当当前公开版本全 PASS；不能在公开仓库假装拥有完整历史复跑入口 |
 | **仅设计/待实测** | 用于理解目标工作流或接入提案，缺少对应完整实测 | 不能作为已有产品能力或启用依据 |
 
-本轮以公开 `bda72c0c4cf74300089a7aa11b2e238aed011d4b` 为发布父基线，修复源码后实际重跑完整 `check.py`；测试绑定[公开测试摘要](evidence/public-current.json)中的当前源码 SHA-256，不把父提交当测试版本。下文 C01–C10 中标注“原公开”的结果与提交均为历史归属；当前运行结果以本轮摘要及 successor 修复案例为准。当前源码没有浏览器渲染验证；旧需求池浏览器结果仅归属[历史摘要](evidence/historical-candidates.json)中的旧源码。
+本次融合候选以 `27f4074c7bf99d3509e3feff47c2e8a523057c21` 为父基线，当前结果和源码 SHA-256 绑定 [fusion-control.json](evidence/fusion-control.json)。前序 successor 以 `bda72c0c4cf74300089a7aa11b2e238aed011d4b` 为父基线的公开/requirements 摘要保留旧来源，不把旧 hash 或父提交当本次测试版本。C01–C10 历史结果按原归属阅读；本次融合协议、HTTP/SQLite/新进程、浏览器和完整 Docker/model 分层陈述。旧需求池浏览器验收仍仅属于旧源码。
 
 历史候选不是可确认 Git commit 的公开检出。其实际测试版本用冻结快照的日期、版本和源码 SHA-256 标识，`source_commit` 明确为 null，绝不用后来的公开 commit 冒充当时测试源码。[历史摘要](evidence/historical-candidates.json)保留各期结果和边界；来源路径、原报告及原结果哈希映射仅在发布者本地保留。公开摘要不提供私人原始模型输出、配置、审批凭据或服务器信息。
 
@@ -33,6 +33,15 @@
 | 用户能核对并选择批准、修改、驳回 | C09 审批卡 | 协议及 VM 逻辑通过；human 任务仍 PENDING | 卡片协议公开当前版本可复现；真人审批待实测 | [审批测试](../pm/test_approval.py)、[card 测试](../pm/test_card.js)、[历史摘要](evidence/historical-candidates.json) | capability 非账户认证；无浏览器视觉验收 |
 | 配置不全不能偷偷执行 | C10 无模型与 Docker | HTTP card=200；审批 BLOCKED、outbox=0；Docker BLOCKED | 阻塞行为公开当前版本可复现；完整闭环待实测 | [check](../pm/check.py)、[公开摘要](evidence/public-current.json) | 退出 0 可能含 BLOCKED；没有拉镜像或真实模型调用 |
 | 接入任意业务、生产、旧系统单写移交 | 工作流和接入 skills | 提案与检查单存在 | 仅设计/待实测 | [新项目方案](../skills/pm-new-project-onboarding/references/PLAN.md)、[历史项目方案](../skills/pm-existing-project-integration/references/PLAN.md) | 无通用业务执行、可信单写租约或生产晋级 |
+
+## 融合控制：协作、限定委托、暂停与降级
+
+- **输入与前置：** 全新 synthetic-history runtime，默认 L1；normal 负责人和 discussion 会话分开。合法执行对照由测试显式配置 L2，固定 history.py、dev 环境、task 和完整 session actor。
+- **观察结果：** L1 可追加需求且 outbox 为零；L0 讨论拒绝。L2 fixture 合法执行和缓存恢复成功，跨 project/scope/env/actor、discussion 升级、L3/通用 adapter 拒绝。pause/降级使旧 epoch 和 QUEUED/RESERVED 失效，保留历史和 RUNNING/UNKNOWN；重启仍暂停。
+- **竞争证据：** 真实子进程受 release 控制，pause 先提交后启动为零；关键写事务先持有时 pause 等待写段结束，之后旧 epoch 写入拒绝。本地 CLI 在 approval.lock 被占用时仍可暂停；不调用模型或 architect。
+- **协议故障：** 真实子进程 stdin/stdout 在线 begin/end 许可；开放/嵌套 fence、空结果和超时拒绝，原始输出持久。停止 kill/inspect 失败由确定性子进程 fixture 覆盖：先持久 UNKNOWN/HANDOFF_REQUIRED，再有界释放 fence；旧 permit 仍可晚写，pause 返回 `dispatch_stopped=true/write_quiescent=false/handoff_required=true/clean_pause=false`，不解释成干净退出。每次 begin/verify 对三张融合表、非空有效 default 初始事件做 fail closed 检查，缺失时零 permit、不重建。recover 对 QUEUED 返回 `RECOVERY_NOT_STARTED`，API 首次 execute 仍保持原入口。
+- **复现：** Linux 上运行 `python3 pm/check.py --report-dir /tmp/new-fusion-check`；真实 HTTP、SQLite、新进程均在新临时副本执行。分层结果、浏览器实际状态及日志 hash 见 fusion-control.json。
+- **不证明：** fixture dispatcher 不证明完整 Docker 派发；外层 Linux 测试容器不包含嵌套 Docker daemon/镜像，不作为完整 PASS。L3、通用业务 adapter、生产和业务单写移交未实现；UNKNOWN 没有人工强制解除接口，融合 SQLite 事件没有管理员抗篡改链/replay 保证。
 
 ## C01：首次实现，再保留既有行为做优化
 

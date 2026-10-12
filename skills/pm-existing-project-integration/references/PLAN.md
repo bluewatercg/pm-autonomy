@@ -38,6 +38,9 @@
 
 复用新项目方案的审批绑定、六角色配置、三architect硬触发、跨主体权限、独立Git/worktree、独立验收和恢复幂等。模型配置只选已核实入口。审批能力会话不实名，管理员边界须披露。
 
+## 融合控制范围
+L0/L1 可作为接入讨论的权限边界；当前 API 实际只支持 synthetic-history 项目状态，不能自动导入业务。L2 要求显式负责人配置 project、environment、observation_scope/control_scope、task、actor；L3 和通用 adapter BLOCKED。暂停/降级追加 SQLite 事件、提升 epoch、撤销未派发 outbox 和 RESERVED，RUNNING/UNKNOWN 保留交接；本地 normal 停止不依赖模型/architect。kill/inspect 失败时先持久 UNKNOWN，再有界释放 fence；旧 permit 未确认结束时状态必须是 dispatch_stopped=true、write_quiescent=false、handoff_required=true，不能称干净暂停。未知在途未核实不能重新配置 L2；没有人工强制解除 UNKNOWN 或业务单写移交实现。每次 broker begin/verify 检查融合三表和完整初始事件，缺失零 permit、不重建；recover 只恢复已有结果，QUEUED 返回 RECOVERY_NOT_STARTED。合成协议、HTTP/SQLite/浏览器 PASS 和真实容器/model 验收分别列证据，不能等价替代。
+
 ## 最终报告
 
 列移交范围、仍由旧系统负责范围、在途任务、原证据位置、每批PASS/PARTIAL/BLOCKED、回退条件与待授权项。只有负责人明确激活且门检查通过时才改变治理所有权。生产发布始终单独批准。

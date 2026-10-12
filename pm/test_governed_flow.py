@@ -19,6 +19,8 @@ def main():
  write_new(root/'pending-proposal.json',p);(root/'private/bridge-key.bin').write_bytes(secrets.token_bytes(32))
  s=remote_store.load_store(root);g=Governance(root)
  sid,csrf=s.register({'capability':s.bootstrap_capability(),'challenge':s.challenge,'confirm_capability_holder':True})
+ from test_approval import authorize_l2
+ authorize_l2(s,sid,csrf)
  bridge.save(root/'private/sessions.json',{'sessions':s.sessions,'capabilities':s.capabilities,'challenge':s.challenge})
  def decide(rid,action='approve'):
   c=s.card();v=c['proposal'];return {'request_id':rid,'decision':action,'version':v['version'],'proposal_hash':c['proposal_hash'],'scope':v['scope'],'base':v['base'],'expiry':v['expiry'],'actions':v['actions'],'note':'合成修订' if action=='change' else ''}

@@ -4,7 +4,7 @@
 
 当前状态是 **CANDIDATE / NOT_IN_FORCE**。本仓库公开了独立 PM 候选的审批、角色配置、运行时 gate、隔离执行接线、独立验收和恢复实现，以及两份项目接入 skills。当前可用写入范围仅为合成 `history.py / select_records` 演练；通用业务执行、全自动需求到代码、生产晋级和旧系统单写移交尚未接通。公开代码不会自动激活 PM 或接管业务项目。
 
-本独立 successor 修复了恢复投影的全表覆盖缺陷：后继按 parent hash/version 只取代未完成父卡，保留完成卡、CLOSED 回执和历史依赖；漂移、治理历史丢失和不确定恢复 fail closed。需求 discussion 权限不能设置 rejected/superseded，normal/destructive 才能设置终态。SQLite 提交前不写投影，每个请求重新 load_store。治理 checkpoint 的 seq/hash 及导出验证共用 SQLite 一致读快照；先读 checkpoint 再开启读快照，写入提交并释放数据库锁后才获取 checkpoint 文件锁。确定性并发对照与删除/截断拒绝回归见[当前测试摘要](docs/evidence/requirements-pool.json)。当前源码未做浏览器渲染验证，旧浏览器结果仅归属历史源码。
+本独立 successor 修复了恢复投影的全表覆盖缺陷：后继按 parent hash/version 只取代未完成父卡，保留完成卡、CLOSED 回执和历史依赖；漂移、治理历史丢失和不确定恢复 fail closed。需求 discussion 权限不能设置 rejected/superseded，normal/destructive 才能设置终态。SQLite 提交前不写投影，每个请求重新 load_store。治理 checkpoint 的 seq/hash 及导出验证共用 SQLite 一致读快照；先读 checkpoint 再开启读快照，写入提交并释放数据库锁后才获取 checkpoint 文件锁。确定性并发对照与删除/截断拒绝回归见[当前测试摘要](docs/evidence/requirements-pool.json)。此段和 requirements-pool.json 记录前序修复，旧证据 hash 仅归属旧源码。本次融合候选基于 `27f4074c7bf99d3509e3feff47c2e8a523057c21`，当前源码绑定、分层回归和浏览器范围见 [融合证据](docs/evidence/fusion-control.json)；公开发布前仍须独立 review。
 
 ## 它怎样帮助负责人处理项目
 
@@ -38,6 +38,32 @@
 条件满足只显示 `ready_for_decision`，不会提醒、批准或执行。确定后转换成 **PENDING 待审批提案**，保留需求历史并建立双向来源链接；当前只绑定已有 `history.py` 合成排序合同，不能将任意业务想法自动变成执行计划。讨论会话不具有转换、批准或执行能力。
 
 [需求池完整示例、CLI/API 与证据等级](docs/REQUIREMENTS-POOL.md)说明“想法 → 暂缓 after_task → 讨论 → 待审批 → 批准”的实际操作。`python3 pm/requirements_cli.py --help` 可安全查看 read/list/add/note/update/state/defer/convert/archive；`check.py` 已包含真实 HTTP/SQLite/新进程并发与中断恢复测试。运行数据和单需求 archive 投影只留私有 runtime。
+
+### 融合档位与停止控制
+
+默认 **L1**，能力注册、模型配置和任务提案都不自动授权执行。
+
+| 档位 | 当前权限与边界 |
+|---|---|
+| L0 | 只读 PM 项目状态，拒绝需求讨论和审批写入；负责人可配置或暂停 |
+| L1 | 需求讨论、协作、待审批提案；零执行权限，不阻断外部工程 |
+| L2 | 负责人显式限定合成任务委托，仍须任务批准、执行与验收各自通过 |
+| L3 | 限定流程控制的设计档位；流程 adapter 未实现，返回 BLOCKED |
+
+真实控制卡和 `GET/POST /api/fusion` 显示当前 level、epoch、paused、观察/控制 scope、actor/task、在途及降级状态。当前支持 `project=synthetic-history`、`observation_scope=[history.py]`；L0/L1 的 control_scope、tasks、actors 为空，L2 才限定 `control_scope=[history.py]`、现存 task 和指定完整 session actor，环境必须 `dev / isolated synthetic Docker`。未知 project adapter、L3 或 prod 拒绝。UI 的 L2 操作显式授权当前卡 task 和当前会话，并非批准任务。
+
+暂停/降级/范围配置递增持久 SQLite epoch，使旧 receipt 和 QUEUED/RESERVED 失效；保留 decisions、事件和在途 RUNNING/UNKNOWN。启动与 broker 新 permit 重核同一 epoch，使用 BEGIN IMMEDIATE fence 与暂停串行。kill/inspect 失败时异常先持久化 UNKNOWN，再有界释放 fence；暂停返回后，已取得旧 permit 的 broker 仍可能写入。所有在途旧 permit 未确认结束时，返回 `dispatch_stopped=true/write_quiescent=false/handoff_required=true/clean_pause=false`；UI 明示旧写未确认停止，不能宣称干净暂停或交接完成。存在 RUNNING/UNKNOWN 时不能再次开启 L2，目前没有人工强制解除 UNKNOWN 的接口，需核实并保留交接证据。
+
+负责人 normal 能力的本地 pause 直接核验私有会话与数据库，不依赖模型、architect 或长时间 approval.lock。私有 `session.json` 由操作者安全保存为 `{"sid":"实际会话值","csrf":"实际CSRF值"}`，不得提交或公开打印。在已初始化的 Linux runtime 使用：
+
+```sh
+python3 fusion_cli.py --root . --session-file private/session.json status
+python3 fusion_cli.py --root . --session-file private/session.json pause
+python3 fusion_cli.py --root . --session-file private/session.json configure --spec private/fusion-spec.json
+python3 fusion_cli.py --root . --session-file private/session.json recover --request-id existing-request-id
+```
+
+configure spec 必含 `expected_epoch/level/project/environment/observation_scope/control_scope/tasks/actors`，值从现有卡和会话核对，不能猜。recover 仅查询/恢复同主体、版本、request 的已有派发结果；QUEUED 未派发拒绝 `RECOVERY_NOT_STARTED`，UNKNOWN 没有结果则阻塞，绝不首次启动；API execute 仍是显式首次执行入口。每次 verify/broker begin 都检查三张融合表、状态行、非空事件和有效 default 初始事件，缺失时零 permit、不重建；已有批准历史的旧 runtime 缺融合表拒绝自动迁移。SQLite 融合事件未提供管理员抗篡改哈希链/replay 保证，可信管理员边界仍适用。
 
 ### feature、task、run 和关系
 
@@ -93,7 +119,7 @@ python3 approval_api.py
 | 页面操作或状态 | 实际效果 |
 |---|---|
 | 确认会话 | 证明持有 capability，任务仍待审批 |
-| 批准 | 审查及基线检查通过后生成绑定回执，进入 `APPROVED_EXECUTION_PENDING` |
+| 批准 | 先显式配置 L2，融合授权、审查及基线通过后生成绑定回执，进入 `APPROVED_EXECUTION_PENDING` |
 | 修改 | 必须填备注；同 task 建立后继版本，撤销旧授权，标记 `revision_required` |
 | 驳回 | 标记 `REJECTED`，不执行提案 |
 | 执行 | 使用批准的 request，通过 broker 派发，再核验独立证据和结案 gate |
@@ -101,7 +127,7 @@ python3 approval_api.py
 
 **修改备注不会自动改方案或代码。** 当前没有通用自动修订入口；待修订版本不能直接批准，维护者需通过经核实的候选修订流程完成修订和重新绑定，不能直接篡改旧回执或旧证据。
 
-空模型配置允许查看卡片和建立会话，但审批被 `BLOCKED_MODEL_NOT_CONFIGURED` 阻塞，不能进入合法执行。批准后缺少镜像或必需审查也会阻塞。执行结果已持久化而结案审查缺失时，补齐审查后用同一主体、版本和 request 恢复；结果未知则人工调查，禁止盲目重派。
+默认 L1 允许查看卡片、建立会话和需求协作，批准先被 `FUSION_EXECUTION_LEVEL_REQUIRED` 阻塞；显式配置 L2 后，空模型配置仍被 `BLOCKED_MODEL_NOT_CONFIGURED` 阻塞，不能进入合法执行。批准后缺少镜像或必需审查也会阻塞。执行结果已持久化而结案审查缺失时，补齐审查后用同一主体、版本和 request 恢复；结果未知则人工调查，禁止盲目重派。
 
 可在 Linux/WSL 核对实际 CLI 参数：
 
@@ -209,6 +235,8 @@ docker image inspect --format '{{.Id}}' pm-autonomy-local:checked
 
 ## 当前验证到哪一层
 
+本次融合候选的当前结果与源码 hash 见 [fusion-control.json](docs/evidence/fusion-control.json)，包含真实 HTTP/SQLite/新进程及在线协议拒绝对照。合法执行对照明确为 fixture dispatcher，不证明完整 Docker 派发。下表保留首个公开候选的历史记录，不能作为本次融合源码验收。
+
 首个公开候选验证对应公开基线 `6e339a8`，来自该公开副本的实际测试输出。以下计数属于不同层，不能相加成独立场景总数，也不能用前序内部版本的“30 个测试”等计数替代。
 
 | 验证层 | 公开候选的已记录结果 | 证明范围 |
@@ -245,6 +273,7 @@ capability 会话只证明持有人，不是平台账户认证、实名认证或
 | [PM_MANIFEST.yaml](PM_MANIFEST.yaml)、[RULES.md](RULES.md) | 候选状态、支持范围与约束 |
 | [initialize.py](pm/initialize.py)、[check.py](pm/check.py) | 初始化和分层检查 |
 | [approval_api.py](pm/approval_api.py)、[remote_store.py](pm/remote_store.py)、[card.js](pm/card.js) | 卡片、持久状态、批准与执行入口 |
+| [fusion.py](pm/fusion.py)、[fusion_cli.py](pm/fusion_cli.py)、[test_fusion.py](pm/test_fusion.py) | 融合权限、SQLite epoch/启动写入 fence、本地停止/恢复与真实分层测试 |
 | [roles_gate.py](pm/roles_gate.py)、[review_task.py](pm/review_task.py)、[role_dispatch.py](pm/role_dispatch.py) | 角色建议与绑定审查 |
 | [bridge.py](pm/bridge.py)、[container_task.py](pm/container_task.py) | 验签、基线与固定容器派发 |
 | [secured_kernel.py](pm/secured_kernel.py)、[governed_kernel.py](pm/governed_kernel.py) | UID 拒绝、幂等恢复与治理结案 |

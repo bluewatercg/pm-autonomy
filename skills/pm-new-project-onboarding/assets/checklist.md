@@ -31,6 +31,17 @@
 - [ ] 未知外部调用保持blocked_unknown
 - [ ] 失败证据和successor关系已保留
 
+## 融合权限
+- [ ] 默认 L1 无执行；L0 讨论写入拒绝，L1 协作成功
+- [ ] observation_scope / control_scope 与 project/environment/task/actor 分别绑定
+- [ ] L2 显式负责人操作；L3/通用 adapter 缺失 BLOCKED
+- [ ] 旧 epoch、跨 scope/env、discussion 扩权被拒绝
+- [ ] pause 与启动/写入事务 fence、重启持久和本地独立停止实测
+- [ ] RUNNING/UNKNOWN 保留交接且不重派；旧 permit 未确认结束不声称干净暂停
+- [ ] 停止失败先持久 UNKNOWN 再有界释放 fence，pause 明示旧写未静止；每次 begin 缺历史零 permit
+- [ ] recover QUEUED 返回 RECOVERY_NOT_STARTED，已有结果恢复不首次启动
+- [ ] fixture、真实浏览器、Docker/model 闭环分层记录
+
 ## 首个任务
 - [ ] 合成演练通过
 - [ ] 用户已亲自选择批准/修改/驳回

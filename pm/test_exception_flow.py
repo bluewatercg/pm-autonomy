@@ -13,6 +13,8 @@ def main():
  s=remote_store.load_store(root);g=Governance(root)
  s.baseline=lambda card:{'base':p['base'],'before_sha':p['before_sha']}
  sid,csrf=s.register({'capability':s.bootstrap_capability(),'challenge':s.challenge,'confirm_capability_holder':True})
+ from test_approval import authorize_l2
+ authorize_l2(s,sid,csrf)
  d={'request_id':'test-exception-0001','decision':'approve','version':1,'proposal_hash':s.card()['proposal_hash'],'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':''};s.decide(sid,csrf,d)
  rows=[]
  def record(name,fn):
@@ -28,9 +30,14 @@ def main():
   with s.connect() as con:con.execute('UPDATE failure_occurrences SET applied=0')
   s.replay_failures();assert g.snapshot(p)['errors']=={'DISPATCH_ConnectionError':1};return {'same_occurrence_deduplicated':True}
  record('exception:same-occurrence-deduplicated',replay_same)
- record('exception:new-failure-same-request-counted',lambda:attempt('DISPATCH_INTERRUPTED_RETRY_SAME_REQUEST'))
- assert g.snapshot(p)['errors']=={'DISPATCH_ConnectionError':2}
- record('exception:third-dispatch-blocked-by-repeat-gate',lambda:attempt('ARCHITECT_REQUIRED:repeated_similar_error'))
+ record('exception:unknown-same-request-no-resend',lambda:attempt('DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND'))
+ assert g.snapshot(p)['errors']=={'DISPATCH_ConnectionError':1}
+ g.failure(p,'DISPATCH_ConnectionError',{'request':'separate-approved-operation','version':1})
+ def repeat_block():
+  try:g.check(p,'execute')
+  except Exception as exc:assert exc.code=='ARCHITECT_REQUIRED:repeated_similar_error';return {'denied':exc.code}
+  raise AssertionError('未阻塞')
+ record('exception:repeat-gate-separate-operation',repeat_block)
  s.recover=lambda receipt:(_ for _ in ()).throw(ValueError('DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND'))
  record('exception:unknown-recovery-recorded-no-resend',lambda:attempt('DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND'))
  record('exception:unknown-recovery-deduplicated',lambda:attempt('DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND'))

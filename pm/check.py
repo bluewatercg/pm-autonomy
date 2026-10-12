@@ -1,11 +1,16 @@
 """在全新临时副本验收；测试状态和原始输出留在指定私有报告目录。"""
-import argparse,ast,importlib.util,json,os,shutil,subprocess,sys,tempfile
+import argparse,ast,hashlib,importlib.util,json,os,shutil,subprocess,sys,tempfile
 from pathlib import Path
 from initialize import initialize
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--report-dir',required=True);a=p.parse_args()
     report=Path(a.report_dir).resolve();report.mkdir(mode=0o700,parents=True,exist_ok=False)
+    project=Path(__file__).resolve().parent.parent
+    def source_hashes():
+        names=json.loads((project/'PUBLIC_FILES.json').read_bytes())['files']
+        return {name:hashlib.sha256((project/name).read_bytes()).hexdigest() for name in names if name!='docs/evidence/fusion-control.json'}
+    tested_sources=source_hashes()
     runs=[]
     def run(name,args,cwd):
         result=subprocess.run(args,cwd=cwd,capture_output=True,text=True,timeout=600)
@@ -24,13 +29,14 @@ try:
  c=http.client.HTTPConnection('127.0.0.1',server.server_port,timeout=5);c.request('GET','/api/card');r=c.getresponse();v=json.loads(r.read());assert r.status==200 and v['status']=='PENDING';c.close()
  sid,csrf=s.register({'capability':s.bootstrap_capability(),'challenge':s.challenge,'confirm_capability_holder':True});p=v['proposal'];d={'request_id':'unconfigured-demo-request','decision':'approve','version':p['version'],'proposal_hash':v['proposal_hash'],'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':''}
  try:s.decide(sid,csrf,d)
- except a.Denied as e:assert e.code=='BLOCKED_MODEL_NOT_CONFIGURED'
+ except a.Denied as e:assert e.code=='FUSION_EXECUTION_LEVEL_REQUIRED'
  else:raise AssertionError('未配置模型却批准')
  status=remote_store.call('status')['result'];assert status['decisions']==status['outbox']==0
- print(json.dumps({'http_card':200,'status':'PENDING','approval':'BLOCKED_MODEL_NOT_CONFIGURED','outbox':0,'secret_values_printed':False}))
+ print(json.dumps({'http_card':200,'status':'PENDING','approval':'FUSION_EXECUTION_LEVEL_REQUIRED','default_level':'L1','outbox':0,'secret_values_printed':False}))
 finally:server.shutdown();server.server_close()
 """
         run('unconfigured-runtime-http',[sys.executable,'-c',smoke],runtime)
+        run('fusion-control',[sys.executable,'-m','unittest','test_fusion','-v'],Path(__file__).resolve().parent)
         run('requirements-pool',[sys.executable,'-m','unittest','test_requirements','-v'],Path(__file__).resolve().parent)
         run('architect-gates',[sys.executable,str(root/'test_roles_gate.py')],root)
         run('exception-recovery',[sys.executable,str(root/'test_exception_flow.py')],root)
@@ -48,6 +54,8 @@ finally:server.shutdown();server.server_close()
         else:runs.append({'name':'docker-governed-flow-and-regression','status':'BLOCKED','reason':'PINNED_IMAGE_UNAVAILABLE_NO_PULL'})
         for name in ['gate-test-results.json','exception-flow-results.json','governed-flow-results.json','results.json']:
             if (root/name).exists():shutil.copyfile(root/name,report/name)
+    assert source_hashes()==tested_sources,'TEST_SOURCE_CHANGED'
+    (report/'source-hashes.json').write_text(json.dumps(tested_sources,ensure_ascii=False,indent=2))
     result={'activation':'NOT_IN_FORCE','reviewer':'SYNTHETIC_TEST_FIXTURE_ONLY','real_model_review':False,'runs':runs,'passed':sum(r['status']=='PASS' for r in runs),'failed':sum(r['status']=='FAIL' for r in runs),'blocked':sum(r['status']=='BLOCKED' for r in runs)}
     (report/'summary.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
     print(json.dumps(result,ensure_ascii=False));return bool(result['failed'])

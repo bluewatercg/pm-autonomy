@@ -25,6 +25,9 @@ feature 是长期产品归属；task 是边界清晰的交付承诺；run 是一
 
 dev、staging、prod逐级授权；开发批准不含生产发布。中断后按事件和请求状态恢复；外部调用结果不明标记 `blocked_unknown`，不盲目重发。证据冻结后建successor，禁止就地改写。
 
+## 融合控制验收
+初始化保持 L1；L0 需求写入拒绝，L1 协作成功且零派发。升级 L2 由负责人 normal 能力在 API/UI 或 CLI 明确操作，观察与控制 scope 分开，绑定 synthetic-history、history.py、dev / isolated synthetic Docker、现存 task、完整 session actor。配置不替代审批。L3 流程或通用项目 adapter 缺失必须 BLOCKED；档位不授予生产权限。用真实 HTTP/SQLite/新进程验证暂停先赢时零启动、启动先赢时保留 RUNNING/UNKNOWN、关键写入与暂停事务 fence、旧 epoch 回执拒绝、重启暂停持久和本地独立停止。停止 kill/inspect 失败先持久 UNKNOWN，再有界释放 fence；旧 permit 未确认结束时 pause 返回 dispatch_stopped=true、write_quiescent=false、handoff_required=true，不能称干净暂停。每次 broker begin/verify 检查融合三表、非空完整初始事件，缺失零 permit、不重建；recover 只恢复已有结果，QUEUED 返回 RECOVERY_NOT_STARTED，未知不盲重派。
+
 ## 能力边界
 
 能力会话不等于实名或人类身份；同UID、容器管理员和宿主管理员边界单独记录。模型名必须现场核实，配置存在不等于调用成功。模板字段是方案示例，不是某个产品的运行时schema。

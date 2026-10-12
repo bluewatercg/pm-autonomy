@@ -128,6 +128,20 @@ def load_store(root=R):
     return store
 
 def call(op,value=None):
+    # 负责人停止只依赖本地能力与融合库，不等待执行锁、模型或 architect。
+    if op in ('fusion_status','fusion_control'):
+        try:
+            from fusion import transaction,snapshot,change
+            sessions=json.loads((R/'private/sessions.json').read_bytes())['sessions']
+            sid=value[0];csrf=value[1] if op=='fusion_control' else None
+            import hashlib,hmac
+            session=sessions.get(hashlib.sha256(str(sid).encode()).hexdigest())
+            if not session or time.time()>=session['expiry']:raise Denied('SESSION_REQUIRED',401)
+            if csrf is not None and not hmac.compare_digest(session['csrf'],str(csrf)):raise Denied('CSRF_DENIED')
+            with transaction(R/'private/approval/approval.sqlite') as con:
+                result=change(con,session,value[2]) if op=='fusion_control' else snapshot(con)
+            return {'ok':True,'result':result}
+        except Denied as exc:return {'ok':False,'code':exc.code,'status':exc.status}
     with (R/'private/approval.lock').open('a+b') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
         from roles_gate import GateDenied
@@ -145,6 +159,7 @@ def call(op,value=None):
             elif op=='session':result=store.session(value)
             elif op=='decide':result=store.decide(*value)
             elif op=='execute':result=store.execute(*value)
+            elif op=='recover':result=store.execute(*value,recovery_only=True)
             elif op=='requirements':result=store.requirements(*value)
             elif op=='requirement_write':result=store.requirement_write(*value)
             elif op=='status':

@@ -1,0 +1,189 @@
+{
+  "schema": "fusion-control-evidence/v2",
+  "activation": "NOT_IN_FORCE",
+  "status": "REVIEWED_CANDIDATE",
+  "base_commit": "27f4074c7bf99d3509e3feff47c2e8a523057c21",
+  "tested_commit": null,
+  "source_binding": "最终未提交文件逐字节 SHA-256；check 和 Chromium 同时绑定，排除证据自身避免循环摘要",
+  "summary": {
+    "activation": "NOT_IN_FORCE",
+    "reviewer": "SYNTHETIC_TEST_FIXTURE_ONLY",
+    "real_model_review": false,
+    "runs": [
+      {
+        "name": "protocol",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "unconfigured-runtime-http",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "fusion-control",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "requirements-pool",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "architect-gates",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "exception-recovery",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "card-logic",
+        "rc": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "docker-governed-flow-and-regression",
+        "status": "BLOCKED",
+        "reason": "PINNED_IMAGE_UNAVAILABLE_NO_PULL"
+      }
+    ],
+    "passed": 7,
+    "failed": 0,
+    "blocked": 1
+  },
+  "browser": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "能力注册与默认L1",
+        "status": "PASS"
+      },
+      {
+        "name": "L1批准阻塞且无派发",
+        "status": "PASS"
+      },
+      {
+        "name": "显式L2配置",
+        "status": "PASS"
+      },
+      {
+        "name": "暂停与刷新持久状态",
+        "status": "PASS"
+      },
+      {
+        "name": "UNKNOWN暂停明示旧写未静止",
+        "status": "PASS"
+      },
+      {
+        "name": "L3适配拒绝",
+        "status": "PASS"
+      }
+    ],
+    "browserRenderingTested": true,
+    "fixtureOnly": true,
+    "unknownInjectionFixture": true,
+    "realExecutionTested": false,
+    "secretValuesPrinted": false
+  },
+  "logs": {
+    "check-03/architect-gates.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/architect-gates.stdout.log": "0023b430a7acae428f55323e181c9206c1360365c2e768c34aa7b23773c7be2a",
+    "check-03/card-logic.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/card-logic.stdout.log": "9e9950cbfdcb85c6e0f52a5aa4d59efb942090008dd796dcede982b9e1e46026",
+    "check-03/exception-flow-results.json": "fd4cf2c84b9fbe36daf0177e103a5c1aacf49085b0621ba5c4968307b0a1224e",
+    "check-03/exception-recovery.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/exception-recovery.stdout.log": "7946e17711c032902db69e18e2c17a2cfd950b831754a4b7590125ca9f3b72e7",
+    "check-03/fusion-control.stderr.log": "4f5a6cd7028120b2816cbc6581f1bbad5d9a69a7e58cdc140a154f78ffa9e1ac",
+    "check-03/fusion-control.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/gate-test-results.json": "2439a0813398d77a9f5472e8f2d3e06a6e7ec0afec538bbb5a48be1fab69017e",
+    "check-03/protocol.stderr.log": "7ea4e76358fd5579a4a211d8c739b1c358be39468aa20c2e9fc82e355fb0f325",
+    "check-03/protocol.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/requirements-pool.stderr.log": "766d9b22883b4523cf4bb6bffae50adbcea34bc998fa2312322664b7d34ca3f1",
+    "check-03/requirements-pool.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/source-hashes.json": "49cebfe3a25b9393e4427f5ec5a16b89a495704f2f4dcd03b44231a7f000a9de",
+    "check-03/summary.json": "b90950cb742bbbb24e20917fa01c1edfde07e1b52f1e7fba5b91ed5ab2d273e1",
+    "check-03/unconfigured-runtime-http.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "check-03/unconfigured-runtime-http.stdout.log": "80e301504085996006f04ba187c5c8e968f4434eacc9a9546231f53b88cd517b",
+    "browser-result.json": "7e25cb1af0c79b797382d918984399300725c68e33095993b969043bfdde389b",
+    "browser-fusion.png": "2d2a2c5d48633be1d79c513cf59060d08590c049d3491bacbda308c8a0bfd91a",
+    "browser-test.cjs": "a894a72d07f75b81c349c1a8b9b623b9ed7481568e0aff02ef8276e72523c112"
+  },
+  "source_hashes": {
+    ".gitignore": "37aba286ef68b5fbe33f5c2552950faf1ecd2ef039caf436474bd44ff0b53f6c",
+    "Dockerfile": "1c285dad5bc879290b5199e463a30188c56054e6439255867a5e5f77cc816142",
+    "PM_MANIFEST.yaml": "7df883e1ccaa959df404c4f10f058e424ee8f8c0981945987a693cc0307110c5",
+    "PUBLIC_FILES.json": "789ff97780376679a9c86fec49f48582dabd65f5617cfef7fdc29e7608cb6c0b",
+    "README.md": "837bd1e5f463a05895e3d15d59520538e1a15f56982464a9124f820b61c1968f",
+    "RULES.md": "c759163a986d5b7d1532f69e17251a7a4d1e692891a2fe2322cc14967f3c16b3",
+    "docs/REQUIREMENTS-POOL.md": "66e0b4602f36809125468b9afa7cb7798764006ef5d91ffa1c82315f79bcf28a",
+    "docs/TESTED-CASES.md": "8c397df825da2d04795c085553f5b1e5fb422285a649845e042ff7648e6a390e",
+    "docs/evidence/requirements-pool.json": "ab46f09f8252c394c9b9223f1e169b2937db32956b7defe21333f67a4807224e",
+    "docs/evidence/historical-candidates.json": "e3187d932fb84d86c41015b71ee22a18bbbe578e46f7e2e6775c093974915a5f",
+    "docs/evidence/public-current.json": "ede765d46a99b72993b3f3eeb7f494494ceecff96e4f8fa3d175b9c94f970e79",
+    "examples/bootstrap-policy.json": "8bb17ced48727e09ad1ecb936ace7329ceb537c8ad889b834d74449b4e6b394a",
+    "examples/model-id-observation.json": "98f0cdfc80b88d50636fb0b859a4b0be7c4c135447059b36b186153d7d7f8876",
+    "examples/roles.json": "02d295b46f13880cb61592f2226dc0d3119ac0ab02a5a100ecba1ce90cdbe971",
+    "pm/approval-card.html": "d6ea651a733e092cceaffa5b206e1a4f34407dda4a22e4be59a652fa7ad47c02",
+    "pm/approval_api.py": "9f14dd476350e2470c4b9d68506f045bb6f34a50cac0df10498d6c6c19467708",
+    "pm/audit_public.py": "5bab360010b4f8d95d8b8173087202a718256ed5dea7eedcdf554e8636931352",
+    "pm/bridge.py": "c483d60a8655e62b33e520341ecce6acba2cee4b4e513ba463e5db3fb6c4a18c",
+    "pm/card.js": "5c88eb9084c3928cfbf3b912745f8f6517f022a24dafbdab4613f5c39d2d6c04",
+    "pm/check.py": "c1874701571825955e5343d7af506d86d6383ab23f965e21214ff6bd267571b1",
+    "pm/container_task.py": "043dea31e8242c87795809b4dc970c992b1312760d5be8b761037f2b1e166d89",
+    "pm/deny-tools.mjs": "2ecbf0ce96ddb5eed301f9160a7b61fa42cd8a5994f9b41d68dad66344d7dbc5",
+    "pm/fusion.py": "75e75eff7724268e97773017662346c87e94314aab0b14c5f9dc828b9cab3684",
+    "pm/fusion_cli.py": "069e42f9c08df59501c956d8b72a327d9b1b9d8cc4f0b5551cc07a421af62756",
+    "pm/test_fusion.py": "950b20c7ee81187c076bbbe5dcc08a25786e0918b23970059113b6e2ba3308cf",
+    "pm/gate_cli.py": "615d6e4a221ac1b32616b5697fe2f81119d6958c230b5fb75099d33f289ac36a",
+    "pm/governed_kernel.py": "2bb60de878e2c44f93d0ded7830f400ffc3aa8016d0f492e2851ab554e756ca3",
+    "pm/initialize.py": "06575262dabbad2edf3b70b4a2ab9554990a404717f4cafb59953751c36559e3",
+    "pm/model_adapter.py": "635f59ff6655261fb9197e18667ff7802cc6d7402bf5974022f333102d76b0c0",
+    "pm/next_kernel_v3.py": "e4b696a91768150a88fbb1449688d26b20f920cbf6628e052f961e5c3ab23b33",
+    "pm/remote_store.py": "289cbabc96f815ca5352cb7f5e0ca50caa5f32707557a81aba243f64e3206145",
+    "pm/requirements.html": "dc6ff959731f0a446953f9b3593ffe5b13fb2ccfb244f2e01b53bde1b755a7d4",
+    "pm/requirements.js": "b5c867526a2dfc3c0595066758ec28c3fdb8cddddee39802c8041782ee771931",
+    "pm/requirements.py": "97761979b4e7c4259b797c5b73d1c04805bf14f23fda388bd1b3af6b355a4f10",
+    "pm/requirements_cli.py": "89997019414b3aae591341e38bcce0c1c9e6430dd19af0f265896fbb022f0e2c",
+    "pm/review_task.py": "041ce5586aff55545c4eee26ceadcad4ed0a8e9faad4943ecf3283f36111e664",
+    "pm/reviewer_process.py": "186a7de9c2c6b4b00267280a1d220f249a48db7873b383a2dc547644dd1de342",
+    "pm/role_dispatch.py": "a20870de1a26cf3098f913d3d05188554f2555eb30d3a0bf3ba8dced5db6c9be",
+    "pm/roles_gate.py": "e3c25dfb6122ad29a94dac65cea0a24c902295f24953425205f371e620954542",
+    "pm/run_validation.py": "e7d38b3f38ffd8fbd2eafe29120972c86e7fb67eb9211e79a8566c5cee9932b9",
+    "pm/secured_kernel.py": "343f5b9a22612aeceefa5d5772e30eda4a5ac3142ce554712da9005eddd20029",
+    "pm/synthetic_reviewer.py": "649bb58e09bab100180ce62af37cbb50aa00bb30f5fdbb1a75bb254b73bafb96",
+    "pm/test_approval.py": "5733a221645925f5618f7ca319fbb82a3a7695ce0de4b263cc24420b51f903a9",
+    "pm/test_boundary.py": "bc540868bc73b8607c290cab1a8abc0a19a066b74304402af8bea5e6ae82ab4c",
+    "pm/test_card.js": "523962533de300f94d4a1d80d0675b2e4765e787e934e49c5002d09a42cafeb6",
+    "pm/test_exception_flow.py": "e033fdd7191629d9b940eee03c84dabcb932863bb1a2b88563e5df5bec8cf945",
+    "pm/test_governed_flow.py": "c32817aeeec4986053d0cebf02db315ec431c22c8004923f426763d918d04ef3",
+    "pm/test_public_boundaries.py": "54c983fe3cf7643859b78ddeb5e9f3d8f784b6287b0e8227021f16ea548104b1",
+    "pm/test_roles_gate.py": "be9c16c232c2fb2f4a4225da03722fd9f98bd3674af7627d9f2430d44b57f063",
+    "pm/test_requirements.py": "4886d71e025a963ec4ada72104157462df28be308f9230f2d73f4a73558efae2",
+    "pm/verify_acceptance.py": "854f03f519610d39c967a62cc0405c14c57214b648bbeee306afe23504952b51",
+    "skills/pm-existing-project-integration/SKILL.md": "1eee38cc4ed4e86f52aae607e56cd7848de7b0b95a876507f79aeff6323b2210",
+    "skills/pm-existing-project-integration/assets/checklist.md": "a79ea586b3b21e56d925d55f0e90280e58198b4608b754e045d28be97f161d3b",
+    "skills/pm-existing-project-integration/references/PLAN.md": "270b1218d543edf1e1ea0f6ddf4f96e19c7cc933e737628ac403b159f63aec34",
+    "skills/pm-new-project-onboarding/SKILL.md": "8f66fe6ccc0c016c2118dc17c3982dfe9a59368e6ac78108035b5fdcf630bf53",
+    "skills/pm-new-project-onboarding/assets/checklist.md": "132ce8806268627b8df092e81d1878a22fe060ec1390be379c658b0e2906a612",
+    "skills/pm-new-project-onboarding/references/PLAN.md": "99acba277dd5c5e8f3e675966ba7480de2b1a369551fd871833183304d6a528d"
+  },
+  "review_method": "主助手单独源码审查与真实子进程黑盒；工具没有独立 Plan/Agent，非第二模型评审",
+  "regressions": [
+    "kill timeout/nonzero、inspect failure、still running 和未确认停止：持久 UNKNOWN 后有界释放；pause 明示旧写未静止；子进程在 pause 后持旧 permit 晚写",
+    "每次 begin/verify 缺融合三表、空事件、缺失或无效 default 初始事件零 permit；同一 exchange 第二 begin 重新检查；不重建",
+    "CLI recover QUEUED 拒绝 RECOVERY_NOT_STARTED；未知无结果不启动；已持久结果恢复与 API 首次 execute 对照",
+    "relay EOF 不再伪造 end 确认；开放 fence 走 UNKNOWN"
+  ],
+  "evidence_boundaries": [
+    "真实 Linux stdlib/HTTP/SQLite/协议子进程与 Chromium；合法派发为 fixture，不是完整 Docker broker PASS",
+    "真实 Docker governed flow / broker kill inspect 端到端与真实 model 均 BLOCKED；外层 Docker 仅提供离线 Linux 测试环境",
+    "L3/通用业务 adapter/生产/业务单写移交未实现",
+    "UNKNOWN 无强制解除接口；旧 permit 未确认结束不宣称干净暂停或交接",
+    "能力持有人非实名账户身份；可信管理员边界保留",
+    "融合 events 持久追加，无 hash chain/replay 保证；完整初始事件检查不能证明全部事件完整性"
+  ]
+}

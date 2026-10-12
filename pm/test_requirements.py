@@ -24,6 +24,9 @@ class RequirementsTests(unittest.TestCase):
         self.addCleanup(setattr, remote_store, 'R', self.previous_root)
         self.store = remote_store.load_store(self.root)
         self.sid, self.csrf = self.register('normal')
+        import fusion
+        with self.store.connect() as con:
+            con.execute('BEGIN IMMEDIATE');value=fusion.state(con);fusion.change(con,self.store.session(self.sid),{'operation':'configure','expected_epoch':value['epoch'],'level':'L2','project':fusion.PROJECT,'environment':fusion.ENVIRONMENT,'observation_scope':['history.py'],'control_scope':['history.py'],'tasks':[self.store.card()['proposal']['task']],'actors':[self.store.session(self.sid)['subject']]})
         self.persist()
 
     def persist(self):
@@ -270,6 +273,8 @@ v=json.load(open('private/test-session.json'));s.requirement_write(v['sid'],v['c
         path='reviews/converted-approval.json';write_new(self.root/path,{'binding':review_binding(state,'large_plan_before_approval'),'verdict':'PASS','pid':os.getpid(),'model':'fixture/model'})
         g.record_review(p,'large_plan_before_approval',path,'SYNTHETIC_TEST_SUBPROCESS',__import__('time').time()+3600)
         d={'request_id':'fixture-approve-converted','decision':'approve','version':p['version'],'proposal_hash':card['proposal_hash'],'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':'仅协议夹具批准'}
+        from test_approval import authorize_l2
+        authorize_l2(restored,self.sid,self.csrf)
         result=restored.decide(self.sid,self.csrf,d)
         self.assertEqual(result['status'],'APPROVED_EXECUTION_PENDING');self.assertEqual(len(self.snapshot()['outbox']),1)
         self.assertEqual(self.snapshot()['outbox'][0][-1],'QUEUED')

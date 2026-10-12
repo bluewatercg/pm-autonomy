@@ -11,7 +11,24 @@ async function api(path,data){
 function display(value){card=value; $('proposal').textContent=JSON.stringify(value.proposal,null,2); $('status').textContent=value.status+' · '+value.identity;}
 function buttons(enabled){enabled=enabled&&!discussionOnly;for(const name of ['approve','change','reject']){const allowed=card.status==='PENDING'||(name==='change'&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status));$(name).disabled=!enabled||!allowed||(name==='approve'&&card.proposal.revision_required);}}
 function clearRequest(){rid=null;window.lastAction=null;sessionStorage.removeItem('approval-request');}
-async function refresh(){const value=await api('/api/card');challenge=value.challenge;display(value);buttons(!!csrf);}
+async function refresh(){const value=await api('/api/card');challenge=value.challenge;display(value);buttons(!!csrf);if(csrf)await refreshFusion();}
+let fusionState=null;
+async function refreshFusion(){
+ fusionState=await api('/api/fusion');
+ $('fusion-summary').textContent=`${fusionState.level} · epoch ${fusionState.epoch} · ${fusionState.paused?'已暂停新派发':'可协作'} · ${fusionState.write_quiescent?'在途写入已静止':'旧写未确认停止，需交接核实'} · ${fusionState.downgrade_status}`;
+ $('fusion-state').textContent=JSON.stringify(fusionState,null,2);
+ for(const id of ['fusion-configure','fusion-pause'])$(id).disabled=!csrf||discussionOnly;
+ $('fusion-refresh').disabled=!csrf;
+}
+$('fusion-refresh').onclick=()=>refreshFusion().catch(e=>message(e.message));
+$('fusion-pause').onclick=async()=>{try{message(await api('/api/fusion',{operation:'pause'}));await refreshFusion();$('execute').disabled=true;}catch(e){message(e.message);}};
+$('fusion-configure').onclick=async()=>{
+ try{
+ const level=$('fusion-level').value,session=await api('/api/session');
+ message(await api('/api/fusion',{operation:'configure',expected_epoch:fusionState.epoch,level,project:$('fusion-project').value,environment:$('fusion-environment').value,observation_scope:['history.py'],control_scope:level==='L2'?['history.py']:[],tasks:level==='L2'?[card.proposal.task]:[],actors:level==='L2'?[session.subject]:[]}));
+ await refresh();$('execute').disabled=true;
+ }catch(e){message(e.message);}
+};
 function message(value){$('message').textContent=typeof value==='string'?value:JSON.stringify(value,null,2);}
 $('holder').onchange=()=>{$('register').disabled=!capability||!$('holder').checked;};
 $('register').onclick=async()=>{try{const result=await api('/api/register',{capability,challenge,confirm_capability_holder:$('holder').checked});csrf=result.csrf;discussionOnly=(await api('/api/session')).privilege==='discussion';capability=null;$('register').disabled=true;$('connection').textContent='会话已由能力持有人确认；任务仍待亲自审批。';await refresh();}catch(error){message(error.message);}};
@@ -39,6 +56,6 @@ $('execute').onclick=async()=>{
   return;
  }
  try{await refresh();$('connection').textContent='已连接回环审批 API；请亲自确认能力注册。';
-  try{const session=await api('/api/session');csrf=session.csrf;discussionOnly=session.privilege==='discussion';rid=sessionStorage.getItem('approval-request');buttons(true);if(rid&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status))$('execute').disabled=false;}catch(error){}
+  try{const session=await api('/api/session');csrf=session.csrf;discussionOnly=session.privilege==='discussion';rid=sessionStorage.getItem('approval-request');buttons(true);await refreshFusion();if(rid&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status))$('execute').disabled=discussionOnly||fusionState.paused||fusionState.level!=='L2';}catch(error){}
  }catch(error){$('connection').textContent='入口不可用，未取得审批。';message(error.message);}
 })();

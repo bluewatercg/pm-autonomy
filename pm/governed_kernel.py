@@ -135,6 +135,12 @@ class Broker:
  def execute(self,uid,req):
   checked=self.check(uid,req)
   if req.get('op')=='hello': return {'uid':uid,'role':checked['role'],'abilities':checked['abilities'],'authentication':'SO_PEERCRED OS UID only'}
+  from fusion import broker_write
+  with broker_write(self.cfg,checked[0]):
+   return self.execute_fenced(uid,req)
+ def execute_fenced(self,uid,req):
+  checked=self.check(uid,req)
+  if req.get('op')=='hello': return {'uid':uid,'role':checked['role'],'abilities':checked['abilities'],'authentication':'SO_PEERCRED OS UID only'}
   body,data,wt=checked; rid=body['request']; fault=req.get('fault'); target=wt/'history.py'
   fingerprint=sha(canonical({k:v for k,v in req.items() if k!='fault'}).encode())
   with open_db(self.root) as con:

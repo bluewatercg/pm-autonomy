@@ -16,7 +16,7 @@ def verify(root,card,result):
     if supplied!=stored:raise GateDenied('ACCEPTANCE_RESULT_DRIFT')
     runtime=stored['runtime'];raw=(folder/(path.stem+'.stdout')).read_bytes();stderr=(folder/(path.stem+'.stderr')).read_bytes()
     if sha(raw)!=runtime['stdout_sha'] or sha(stderr)!=runtime['stderr_sha']:raise GateDenied('ACCEPTANCE_RUNTIME_RAW_DRIFT')
-    exported=json.loads(raw)
+    exported=json.loads(raw.splitlines()[-1])
     if exported['evidence']!=e or not exported['ok'] or runtime['rc']!=0:raise GateDenied('ACCEPTANCE_RUNTIME_FAILED')
     from bridge import IMAGE
     if runtime['image']!=IMAGE or runtime['network']!='none' or not runtime['read_only'] or runtime['ports'] or runtime['privileged'] or any(m['Type']!='tmpfs' for m in runtime['mounts']):raise GateDenied('ACCEPTANCE_ISOLATION_INVALID')

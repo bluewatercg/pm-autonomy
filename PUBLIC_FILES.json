@@ -11,6 +11,7 @@
     "docs/REQUIREMENTS-POOL.md",
     "docs/TESTED-CASES.md",
     "docs/evidence/requirements-pool.json",
+    "docs/evidence/fusion-control.json",
     "docs/evidence/historical-candidates.json",
     "docs/evidence/public-current.json",
     "examples/bootstrap-policy.json",
@@ -24,6 +25,9 @@
     "pm/check.py",
     "pm/container_task.py",
     "pm/deny-tools.mjs",
+    "pm/fusion.py",
+    "pm/fusion_cli.py",
+    "pm/test_fusion.py",
     "pm/gate_cli.py",
     "pm/governed_kernel.py",
     "pm/initialize.py",
@@ -57,6 +61,6 @@
     "skills/pm-new-project-onboarding/assets/checklist.md",
     "skills/pm-new-project-onboarding/references/PLAN.md"
   ],
-  "release_basis": "bda72c0c4cf74300089a7aa11b2e238aed011d4b",
-  "source_binding": "docs/evidence/requirements-pool.json#source_hashes"
+  "release_basis": "27f4074c7bf99d3509e3feff47c2e8a523057c21",
+  "source_binding": "docs/evidence/fusion-control.json#source_hashes"
 }

@@ -128,6 +128,8 @@ def mutate(store, sid, csrf, data):
     fp = digest({'actor': session['subject'], 'data': data})
     with store.lock, store.connect() as con:
         con.execute('BEGIN IMMEDIATE')
+        import fusion
+        fusion.collaboration(con)
         state, histories, prev = fold(con)
         cached = con.execute('SELECT fingerprint,result FROM requirement_requests WHERE id=?', (reqid,)).fetchone()
         if cached:

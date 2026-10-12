@@ -2,15 +2,16 @@
 import copy,http.client,json,secrets,tempfile,threading,time,unittest
 from pathlib import Path
 from approval_api import Store,Denied,make_server,digest
-from test_approval import FakeRemote
+from test_approval import FakeRemote,authorize_l2
 
 class BoundaryTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
         self.fake=FakeRemote(self.root);self.key=secrets.token_bytes(32)
-        self.p={'schema':'approval-proposal/v1','task':'TEST-ONLY','version':1,'scope':['history.py'],'base':'abc','before_sha':'before','source_sha':'source','expiry':time.time()+600,'actions':['edit'],'change':'normal','source':{'request':'合成测试'},'acceptance':['固定行为'],'risks':['测试能力并非账户认证']}
+        self.p={'schema':'approval-proposal/v1','task':'TEST-ONLY','version':1,'scope':['history.py'],'base':'abc','before_sha':'before','source_sha':'source','expiry':time.time()+600,'actions':['edit'],'change':'normal','source':{'request':'合成测试'},'acceptance':['固定行为'],'risks':['测试能力并非账户认证'],'project':'synthetic-history','environment':'dev / isolated synthetic Docker'}
         self.s=Store(self.root,self.p,self.key,self.fake.baseline,self.fake.dispatch,self.fake.sync)
         self.sid,self.csrf=self.register()
+        authorize_l2(self.s,self.sid,self.csrf)
     def register(self,privilege='normal'):
         return self.s.register({'capability':self.s.bootstrap_capability(privilege),'challenge':self.s.challenge,'confirm_capability_holder':True})
     def data(self,decision='approve',rid='test-request-0001'):
@@ -66,7 +67,7 @@ class BoundaryTests(unittest.TestCase):
         p={**self.p,'change':'destructive'}
         with self.s.connect() as con:con.execute('UPDATE cards SET body=?',(json.dumps(p),))
         self.deny('DESTRUCTIVE_CAPABILITY_REQUIRED',lambda:self.s.decide(self.sid,self.csrf,self.data()))
-        self.sid,self.csrf=self.register('destructive');self.assertEqual(self.s.decide(self.sid,self.csrf,self.data())['status'],'APPROVED_EXECUTION_PENDING')
+        self.sid,self.csrf=self.register('destructive');authorize_l2(self.s,self.sid,self.csrf);self.assertEqual(self.s.decide(self.sid,self.csrf,self.data())['status'],'APPROVED_EXECUTION_PENDING')
     def test_interrupt_and_restart(self):
         d=self.data();self.s.decide(self.sid,self.csrf,d)
         calls=[]
@@ -74,7 +75,8 @@ class BoundaryTests(unittest.TestCase):
         self.s.dispatch=interrupted
         self.deny('DISPATCH_INTERRUPTED_RETRY_SAME_REQUEST',lambda:self.s.execute(self.sid,self.csrf,d['request_id']))
         s=Store(self.root,self.p,self.key,self.fake.baseline,self.fake.dispatch,self.fake.sync);s.sessions=self.s.sessions
-        self.assertTrue(s.execute(self.sid,self.csrf,d['request_id'])['ok']);self.assertTrue(s.execute(self.sid,self.csrf,d['request_id'])['cached'])
+        self.deny('DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND',lambda:s.execute(self.sid,self.csrf,d['request_id']))
+        self.assertFalse(any(c[0]=='dispatch' for c in self.fake.calls))
         self.assertEqual(calls,[d['request_id']])
     def test_full_task_card(self):
         p=json.loads(Path(__file__).with_name('pending-proposal.json').read_bytes())
@@ -94,6 +96,7 @@ class BoundaryTests(unittest.TestCase):
         status,headers,raw=req('/api/register',{'capability':token,'challenge':self.s.challenge,'confirm_capability_holder':True},h)
         self.assertEqual(status,200);cookie=headers['Set-Cookie'];self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie)
         csrf=json.loads(raw)['csrf'];h['Cookie']=cookie.split(';')[0]
+        authorize_l2(self.s,h['Cookie'].split('=',1)[1],csrf)
         self.assertEqual(req('/api/decision',self.data(),h)[0],403)
         h['X-CSRF-Token']=csrf
         self.assertEqual(req('/api/decision',{**self.data(),'actor':'user'},h)[0],400)
