@@ -124,8 +124,6 @@ class Store:
             else:
                 if not data['note'].strip(): raise Denied('CHANGE_NOTE_REQUIRED',400)
                 successor={**card,'version':card['version']+1,'parent_proposal_hash':digest(card),'change_note':data['note'],'revision_required':True,'expiry':time.time()+86400}
-                # 先使远端旧版本失效；若本地事务中断，旧卡只能拒绝，不能偷用旧授权。
-                self.sync_version(successor)
                 con.execute('UPDATE cards SET status=? WHERE version=?',('SUPERSEDED',card['version']))
                 con.execute('UPDATE outbox SET phase=? WHERE phase!=?',('REVOKED','CLOSED'))
                 con.execute('INSERT INTO cards VALUES(?,?,?)',(successor['version'],canonical(successor),'PENDING'))
@@ -133,7 +131,10 @@ class Store:
             if data['decision']!='change': con.execute('UPDATE cards SET status=? WHERE version=?',(new_status,card['version']))
             result={'request_id':data['request_id'],'decision':data['decision'],'status':new_status,'version':card['version'],'proposal_hash':digest(card),'identity':'capability-holder-not-workbuddy-account','cached':False}
             con.execute('INSERT INTO decisions VALUES(?,?,?,?)',(data['request_id'],fp,card['version'],canonical(result)))
-            return result
+        if data['decision']=='change':
+            # SQLite 已提交；投影与治理登记由请求恢复边界处理。
+            self.sync_version(successor)
+        return result
     def requirements(self, sid, requirement_id=None):
         from requirements import read
         return read(self, sid, requirement_id)

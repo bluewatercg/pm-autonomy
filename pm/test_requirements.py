@@ -275,4 +275,274 @@ v=json.load(open('private/test-session.json'));s.requirement_write(v['sid'],v['c
         self.assertEqual(self.snapshot()['outbox'][0][-1],'QUEUED')
         self.assertEqual(self.store.requirements(self.sid,'R-1')['status'],'converted')
 
+    def recovery_snapshot(self):
+        with self.store.connect() as con:
+            approval={name:con.execute('SELECT * FROM '+name).fetchall() for name in ('cards','outbox','decisions','failure_occurrences','requirement_events','requirement_requests')}
+        db=self.root/'private/governance.sqlite'
+        import sqlite3
+        with sqlite3.connect(db) as con: events=con.execute('SELECT * FROM events').fetchall()
+        projection=self.root/'private/active-proposal.json'
+        checkpoint=self.root/'private/governance-checkpoint.json'
+        return approval,events,projection.read_bytes() if projection.exists() else None,checkpoint.read_bytes() if checkpoint.exists() else None
+
+    def recovery_denied(self, code):
+        before=self.recovery_snapshot()
+        with self.assertRaises((Denied,GateDenied)) as error: remote_store.load_store(self.root)
+        self.assertEqual(error.exception.code,code)
+        self.assertEqual(self.recovery_snapshot(),before)
+
+    def test_terminal_permission_denial_and_normal_destructive_controls(self):
+        sid,csrf=self.register('discussion')
+        for privilege in ('normal','destructive'):
+            control_sid,control_csrf=self.register(privilege)
+            for target in ('rejected','superseded'):
+                rid='R-'+privilege+'-'+target
+                self.write(self.add(rid,'add-'+rid),sid,csrf)
+                self.write(self.add(rid+'-next','add-'+rid+'-next'))
+                payload=self.command('state',rid=rid,status=target,reason='明确终态决定',superseded_by=rid+'-next' if target=='superseded' else None)
+                before=self.snapshot()
+                with self.assertRaises(Denied) as error:self.write(payload,sid,csrf)
+                self.assertEqual(error.exception.code,'REQUIREMENT_TERMINAL_CAPABILITY_REQUIRED');self.assertEqual(self.snapshot(),before)
+                self.assertEqual(self.write(payload,control_sid,control_csrf)['status'],target)
+                # 终态缓存也不得绕过权限检查。
+                before=self.snapshot()
+                with self.assertRaises(Denied):self.write(payload,sid,csrf)
+                self.assertEqual(self.snapshot(),before)
+        self.write(self.add('R-discussion','add-discussion'),sid,csrf)
+        self.write(self.command('state',rid='R-discussion',status='awaiting_decision',reason=None,superseded_by=None),sid,csrf)
+        self.write(self.command('defer',2,rid='R-discussion',reason='等待讨论',after_task=[]),sid,csrf)
+        self.write(self.command('note',3,rid='R-discussion',note='保留讨论'),sid,csrf)
+
+    def complete_fixture(self,card):
+        from roles_gate import write_new,review_binding
+        import time
+        g=Governance(self.root)
+        state=g.snapshot(card)
+        path='reviews/complete-'+str(card['version'])+'-plan.json'
+        write_new(self.root/path,{'binding':review_binding(state,'large_plan_before_approval'),'verdict':'PASS','pid':os.getpid(),'model':'fixture/model'})
+        g.record_review(card,'large_plan_before_approval',path,'SYNTHETIC_TEST_SUBPROCESS',time.time()+3600)
+        g.accept(card,{'rc':0,'artifact':card['source_sha'],'base':card['base'],'test_sha':'synthetic-protocol-only'})
+        state=g.snapshot(card);path='reviews/complete-'+str(card['version'])+'-close.json'
+        write_new(self.root/path,{'binding':review_binding(state,'long_task_closeout'),'verdict':'PASS','pid':os.getpid(),'model':'fixture/model'})
+        g.record_review(card,'long_task_closeout',path,'SYNTHETIC_TEST_SUBPROCESS',time.time()+3600);g.close(card)
+        with self.store.connect() as con:
+            con.execute("UPDATE cards SET status='COMPLETED_SYNTHETIC' WHERE version=?",(card['version'],))
+            con.execute('INSERT INTO outbox VALUES(?,?,?,?)',('closed-'+str(card['version']),canonical({'body':{'version':card['version'],'proposal_hash':digest(card)}}),canonical({'ok':True}),'CLOSED'))
+
+    def test_recovery_preserves_completed_dependency_and_closed_receipt(self):
+        import bridge
+        parent=self.store.card()['proposal'];self.complete_fixture(parent)
+        self.write(self.add());self.write(self.command('defer',reason='等待历史闭合',after_task=[parent['task']]))
+        self.write(self.conversion(2));self.store=remote_store.load_store(self.root)
+        current=self.store.card()['proposal']
+        g=Governance(self.root)
+        successor={**current,'version':current['version']+1,'parent_proposal_hash':digest(current),'revision_required':True}
+        g.register(successor,successor['governance_policy'])
+        with self.store.connect() as con:
+            con.execute('INSERT INTO outbox VALUES(?,?,NULL,?)',('parent-queued',canonical({'body':{'version':current['version'],'proposal_hash':digest(current)}}),'QUEUED'))
+            con.execute('INSERT INTO outbox VALUES(?,?,NULL,?)',('other-queued',canonical({'body':{'version':parent['version'],'proposal_hash':digest(parent)}}),'QUEUED'))
+        before=self.snapshot();self.store=remote_store.load_store(self.root)
+        self.assertEqual(self.store.card()['proposal'],successor)
+        self.assertEqual(bridge.read_proposal(self.root),successor)
+        rows=self.snapshot();self.assertEqual(rows['cards'][0],before['cards'][0]);self.assertEqual(rows['outbox'][0],before['outbox'][0])
+        self.assertEqual(rows['cards'][1][-1],'SUPERSEDED');self.assertEqual(rows['outbox'][1][-1],'REVOKED');self.assertEqual(rows['outbox'][2],before['outbox'][2])
+        self.assertTrue(self.store.requirements(self.sid,'R-1')['ready_for_decision'] is False)  # 已转换保持终态。
+        self.write(self.add('R-after','add-after'))
+        self.write(self.command('defer',rid='R-after',reason='保留历史完成依赖',after_task=[parent['task']]))
+        self.assertTrue(self.store.requirements(self.sid,'R-after')['ready_for_decision'])
+        out=self.child("import sys,json;from remote_store import load_store;s=load_store(sys.argv[1]);sid=json.load(open('private/test-session.json'))['sid'];assert s.requirements(sid,'R-after')['ready_for_decision'];print('HISTORICAL_DEPENDENCY_RECOVERED')")
+        self.assertEqual(out.returncode,0,out.stderr)
+        before=self.recovery_snapshot();remote_store.load_store(self.root);self.assertEqual(self.recovery_snapshot(),before)
+
+    def test_invalid_recovery_zero_writes(self):
+        import bridge
+        parent=self.store.card()['proposal']
+        path=self.root/'private/active-proposal.json'
+        for bad in ({**parent,'version':3,'parent_proposal_hash':digest(parent)}, {**parent,'version':2,'parent_proposal_hash':'0'*64}, {**parent,'goal':'同版本漂移'}):
+            bridge.save(path,bad)
+            self.recovery_denied('REMOTE_PROJECTION_DRIFT' if bad['version']==1 else 'REMOTE_VERSION_CONFLICT')
+        bridge.save(path,parent)
+        new={**parent,'version':2,'parent_proposal_hash':digest(parent),'revision_required':True}
+        Governance(self.root).register(new,new['governance_policy'])
+        (self.root/'requirements.py').write_text('漂移的控制源码')
+        self.recovery_denied('CONTROL_SOURCE_DRIFT')
+
+    def test_durable_chain_drift_zero_writes(self):
+        parent=self.store.card()['proposal']
+        for new in ({**parent,'version':3,'parent_proposal_hash':digest(parent)}, {**parent,'version':2,'parent_proposal_hash':'0'*64}):
+            with self.store.connect() as con:con.execute('INSERT INTO cards VALUES(?,?,?)',(new['version'],canonical(new),'PENDING'))
+            self.recovery_denied('REMOTE_VERSION_CONFLICT')
+            with self.store.connect() as con:con.execute('DELETE FROM cards WHERE version=?',(new['version'],))
+        with self.store.connect() as con:con.execute('UPDATE cards SET body=? WHERE version=1',(canonical({**parent,'goal':'SQLite 同版本漂移'}),))
+        self.recovery_denied('REMOTE_PROJECTION_DRIFT')
+
+    def test_change_sqlite_crash_zero_projection_and_committed_recovery(self):
+        import bridge
+        parent=self.store.card()['proposal']
+        payload={'request_id':'change-crash-request','decision':'change','version':parent['version'],'proposal_hash':digest(parent),'scope':parent['scope'],'base':parent['base'],'expiry':parent['expiry'],'actions':parent['actions'],'note':'中断后恢复'}
+        (self.root/'private/change-payload.json').write_text(canonical(payload))
+        before=self.recovery_snapshot()
+        code="""import sys,os,json,contextlib
+from remote_store import load_store
+s=load_store(sys.argv[1]);old=s.connect
+@contextlib.contextmanager
+def crash_connect():
+ with old() as con:
+  con.create_function('crash_now',0,lambda:os._exit(87));yield con
+s.connect=crash_connect
+with s.connect() as con:con.execute("CREATE TRIGGER crash_change BEFORE INSERT ON decisions BEGIN SELECT crash_now(); END")
+v=json.load(open('private/test-session.json'));s.decide(v['sid'],v['csrf'],json.load(open('private/change-payload.json')))
+"""
+        out=self.child(code);self.assertEqual(out.returncode,87,out.stderr)
+        self.assertEqual(self.recovery_snapshot(),before)
+        with self.store.connect() as con:con.execute('DROP TRIGGER crash_change')
+        from unittest.mock import patch
+        with patch.object(self.store,'sync_version',side_effect=RuntimeError('提交后模拟中断')):
+            with self.assertRaises(RuntimeError):self.store.decide(self.sid,self.csrf,payload)
+        self.assertEqual(bridge.read_proposal(self.root),parent)
+        self.store=remote_store.load_store(self.root)
+        self.assertEqual(self.store.card()['proposal']['version'],2)
+        self.assertEqual(bridge.read_proposal(self.root),self.store.card()['proposal'])
+        self.assertTrue(self.store.decide(self.sid,self.csrf,payload)['cached'])
+        self.assertEqual(len(Governance(self.root).export_events()),2)
+
+    def test_legacy_missing_governance_with_history_zero_writes(self):
+        g=Governance(self.root);card=self.store.card()['proposal']
+        g.failure(card,'ERROR_HISTORY',{'fixture':'must-not-reregister'})
+        with self.store.connect() as con:
+            con.execute('INSERT INTO failure_occurrences VALUES(?,?,?,1)',('historical-failure',canonical(card),canonical({'ok':False})))
+        (self.root/'private/governance-checkpoint.json').unlink()
+        (self.root/'private/governance.sqlite').unlink()
+        with self.assertRaises(Denied) as error:remote_store.load_store(self.root)
+        self.assertEqual(error.exception.code,'GOVERNANCE_HISTORY_LOST')
+        self.assertFalse((self.root/'private/governance.sqlite').exists())
+
+    def test_completed_same_task_recovery_is_denied(self):
+        parent=self.store.card()['proposal'];self.complete_fixture(parent)
+        new={**parent,'version':2,'parent_proposal_hash':digest(parent),'revision_required':True}
+        Governance(self.root).register(new,new['governance_policy'])
+        self.recovery_denied('COMPLETED_TASK_SUCCESSOR_DENIED')
+
+    def test_governance_loss_and_truncated_history_fail_closed(self):
+        g=Governance(self.root);card=self.store.card()['proposal']
+        g.failure(card,'SYNTHETIC_ERROR',{'fixture':'history-must-survive'})
+        db=self.root/'private/governance.sqlite';saved=db.read_bytes()
+        db.unlink()
+        with self.assertRaises((Denied,GateDenied)) as error:remote_store.load_store(self.root)
+        self.assertEqual(error.exception.code,'GOVERNANCE_HISTORY_LOST');self.assertFalse(db.exists())
+        db.write_bytes(saved)
+        import sqlite3
+        with sqlite3.connect(db) as con:con.execute('DELETE FROM events WHERE seq=(SELECT MAX(seq) FROM events)')
+        self.recovery_denied('GOVERNANCE_HISTORY_LOST')
+        db.write_bytes(saved)
+        with sqlite3.connect(db) as con:con.execute('DELETE FROM events')
+        self.recovery_denied('GOVERNANCE_HISTORY_LOST')
+
+    def test_checkpoint_concurrent_commit_uses_one_snapshot(self):
+        import sqlite3
+        from unittest.mock import patch
+        import bridge
+        card=self.store.card()['proposal'];reader=Governance(self.root);writer=Governance(self.root)
+        with sqlite3.connect(reader.db) as con: con.execute('PRAGMA journal_mode=WAL')
+        start=threading.Event();committed=threading.Event();results=[];published=[]
+        real_fold=reader.fold;real_save=writer.save_checkpoint;save=bridge.save
+        def writer_save():
+            committed.set();real_save()
+        writer.save_checkpoint=writer_save
+        def write():
+            try:
+                if not start.wait(10): raise AssertionError('并发写入未启动')
+                writer.failure(card,'CHECKPOINT_RACE',{'fixture':'between-fold-and-count'})
+                results.append('success')
+            except Exception as error: results.append(repr(error))
+        def paused_fold(con):
+            value=real_fold(con);start.set()
+            if not committed.wait(10): raise AssertionError('并发提交未完成')
+            return value
+        def capture(path,value):
+            if path==reader.checkpoint: published.append(dict(value))
+            save(path,value)
+        reader.fold=paused_fold
+        thread=threading.Thread(target=write,daemon=True);thread.start()
+        with patch.object(bridge,'save',side_effect=capture):
+            reader.save_checkpoint();thread.join(10)
+        self.assertFalse(thread.is_alive(),'checkpoint 与 SQLite 锁死锁')
+        self.assertEqual(results,['success'])
+        events=Governance(self.root).export_events()
+        self.assertEqual(len(events),2)
+        self.assertEqual(sorted(value['seq'] for value in published),[1,2])
+        for value in published: self.assertEqual(value['hash'],events[value['seq']-1]['hash'])
+        self.assertEqual(json.loads(reader.checkpoint.read_bytes()),{'seq':2,'hash':events[-1]['hash']})
+        self.assertEqual(Governance(self.root).snapshot(card)['errors'],{'CHECKPOINT_RACE':1})
+
+    def test_fold_checkpoint_read_precedes_database_snapshot(self):
+        import sqlite3
+        card=self.store.card()['proposal'];reader=Governance(self.root);writer=Governance(self.root)
+        with sqlite3.connect(reader.db) as con: con.execute('PRAGMA journal_mode=WAL')
+        # 在 checkpoint 已读取、数据库快照尚未建立时，正常 writer 完整提交并推进 checkpoint。
+        with reader.connect() as con:
+            class InterleavedConnection:
+                @property
+                def in_transaction(self): return con.in_transaction
+                def execute(proxy,sql,*args):
+                    if sql=='BEGIN': writer.failure(card,'READ_RACE',{'fixture':'before-read-snapshot'})
+                    return con.execute(sql,*args)
+            state,hashed=reader.fold(InterleavedConnection())
+        events=Governance(self.root).export_events()
+        self.assertEqual(state['tasks'][card['task']]['errors'],{'READ_RACE':1})
+        self.assertEqual(hashed,events[-1]['hash'])
+        self.assertEqual(json.loads(reader.checkpoint.read_bytes()),{'seq':2,'hash':hashed})
+
+    def test_export_validation_and_rows_share_snapshot(self):
+        import sqlite3
+        card=self.store.card()['proposal'];reader=Governance(self.root);writer=Governance(self.root)
+        with sqlite3.connect(reader.db) as con: con.execute('PRAGMA journal_mode=WAL')
+        real_fold=reader.fold
+        def paused_fold(con):
+            value=real_fold(con)
+            writer.failure(card,'EXPORT_RACE',{'fixture':'after-validated-snapshot'})
+            return value
+        reader.fold=paused_fold
+        events=reader.export_events()
+        self.assertEqual(len(events),1)
+        latest=Governance(self.root).export_events()
+        self.assertEqual(len(latest),2);self.assertEqual(events,latest[:1])
+
+    def test_parallel_checkpoint_append_and_failure_no_deadlock(self):
+        from concurrent.futures import ThreadPoolExecutor
+        card=self.store.card()['proposal'];barrier=threading.Barrier(8)
+        def write(i):
+            g=Governance(self.root);barrier.wait(timeout=10)
+            if i%2: g.failure(card,'PARALLEL',{'fixture':i})
+            else: g.append('failure',{'task':card['task'],'error_class':'PARALLEL','evidence':{'fixture':i}},lambda state: None)
+            g.save_checkpoint()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures=[pool.submit(write,i) for i in range(8)]
+            for future in futures: future.result(timeout=30)
+        g=Governance(self.root);events=g.export_events()
+        self.assertEqual(len(events),9)
+        self.assertEqual(g.snapshot(card)['errors'],{'PARALLEL':8})
+        self.assertEqual(json.loads(g.checkpoint.read_bytes()),{'seq':9,'hash':events[-1]['hash']})
+
+    def test_initialization_new_requirement_registration_and_postcommit_projection(self):
+        from unittest.mock import patch
+        import bridge
+        self.assertEqual(len(Governance(self.root).export_events()),1)
+        self.write(self.add());self.write(self.conversion())
+        self.store=remote_store.load_store(self.root)
+        self.assertEqual(len([e for e in Governance(self.root).export_events() if e['kind']=='register']),2)
+        p=self.store.card()['proposal']
+        payload={'request_id':'postcommit-change','decision':'change','version':p['version'],'proposal_hash':digest(p),'scope':p['scope'],'base':p['base'],'expiry':p['expiry'],'actions':p['actions'],'note':'修订待审批方案'}
+        old_save=bridge.save
+        def checked_save(path,value):
+            with self.store.connect() as con:
+                con.execute('BEGIN IMMEDIATE')
+                if path.name=='active-proposal.json':
+                    latest=json.loads(con.execute('SELECT body FROM cards ORDER BY version DESC LIMIT 1').fetchone()[0])
+                    self.assertEqual(latest,value)
+            old_save(path,value)
+        with patch.object(bridge,'save',side_effect=checked_save):self.store.decide(self.sid,self.csrf,payload)
+        self.assertEqual(bridge.read_proposal(self.root)['version'],p['version']+1)
+        self.assertEqual(len(Governance(self.root).export_events()),3)
+
 if __name__=='__main__': unittest.main(verbosity=2)

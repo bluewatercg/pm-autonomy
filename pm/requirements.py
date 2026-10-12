@@ -120,6 +120,8 @@ def mutate(store, sid, csrf, data):
     op = data.get('operation')
     if not isinstance(op, str) or op not in fields or set(data) != common | fields[op]:
         raise Denied('REQUIREMENT_PAYLOAD_INVALID', 400)
+    if session['privilege'] == 'discussion' and (op == 'convert' or (op == 'state' and data['status'] in ('rejected', 'superseded'))):
+        raise Denied('PROPOSAL_CAPABILITY_REQUIRED' if op == 'convert' else 'REQUIREMENT_TERMINAL_CAPABILITY_REQUIRED')
     reqid = identifier(data['request_id']); rid = identifier(data['requirement_id'])
     expected = data['expected_version']
     if type(expected) is not int or expected < 0: raise Denied('REQUIREMENT_VERSION_INVALID', 400)

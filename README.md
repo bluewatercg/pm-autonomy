@@ -4,6 +4,8 @@
 
 当前状态是 **CANDIDATE / NOT_IN_FORCE**。本仓库公开了独立 PM 候选的审批、角色配置、运行时 gate、隔离执行接线、独立验收和恢复实现，以及两份项目接入 skills。当前可用写入范围仅为合成 `history.py / select_records` 演练；通用业务执行、全自动需求到代码、生产晋级和旧系统单写移交尚未接通。公开代码不会自动激活 PM 或接管业务项目。
 
+本独立 successor 修复了恢复投影的全表覆盖缺陷：后继按 parent hash/version 只取代未完成父卡，保留完成卡、CLOSED 回执和历史依赖；漂移、治理历史丢失和不确定恢复 fail closed。需求 discussion 权限不能设置 rejected/superseded，normal/destructive 才能设置终态。SQLite 提交前不写投影，每个请求重新 load_store。治理 checkpoint 的 seq/hash 及导出验证共用 SQLite 一致读快照；先读 checkpoint 再开启读快照，写入提交并释放数据库锁后才获取 checkpoint 文件锁。确定性并发对照与删除/截断拒绝回归见[当前测试摘要](docs/evidence/requirements-pool.json)。当前源码未做浏览器渲染验证，旧浏览器结果仅归属历史源码。
+
 ## 它怎样帮助负责人处理项目
 
 项目容易出现的问题是：口头需求没有验收标准、任务与原需求脱节、模型自称完成却没有证据、修改范围不断扩大，以及旧任务关闭后无人承接剩余项。本项目的目的，是把这些决定和证据放到能核对的任务流程里。

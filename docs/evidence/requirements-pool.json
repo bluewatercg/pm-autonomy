@@ -1,11 +1,11 @@
 {
   "schema": "requirements-pool-evidence/v1",
-  "base_commit": "3582b8c40731935a0bc386ba3f59dde815a55580",
+  "base_commit": "bda72c0c4cf74300089a7aa11b2e238aed011d4b",
   "activation": "NOT_IN_FORCE",
   "evidence_level": "PUBLIC_CURRENT_REPRODUCIBLE",
   "source_hashes": {
     "pm/approval-card.html": "8f1566790f414346e0e3308c8880ca90ced154d80109433f22e13a1ad79700db",
-    "pm/approval_api.py": "3b48e4f10de77f232a57208e30a5ff6f5bf206bb8b07542e0318d24304f02534",
+    "pm/approval_api.py": "50ddf24d9269d2571bf7402d32b8623746c6bf918ebd8aa0288d5a5f2d3e7a7d",
     "pm/audit_public.py": "b0fd8fd1ec93ac0341ab07887d62391e5c0a36b77e62f5332158ab32d15c2aff",
     "pm/bridge.py": "093c8a0130250ae78e3061ac3055d3b98381fea5a10672df5b6e2f6872f51f3a",
     "pm/card.js": "a2042ff4b03b3e2df0ed25bfaccbffa660b88d853a3c3bbcb056d52557c41f74",
@@ -17,15 +17,15 @@
     "pm/initialize.py": "e8bf9d00def3fd3a73951aab6a410061e049efc3295f247889e9793ced00437a",
     "pm/model_adapter.py": "635f59ff6655261fb9197e18667ff7802cc6d7402bf5974022f333102d76b0c0",
     "pm/next_kernel_v3.py": "e4b696a91768150a88fbb1449688d26b20f920cbf6628e052f961e5c3ab23b33",
-    "pm/remote_store.py": "b823a72957bc3339a1d6221f2d3ba94fe5b787009af321c6c1736faff993414e",
+    "pm/remote_store.py": "7f5c014c537afa5796906866b4d22541409cc6b0211e81bd6663d3766595b310",
     "pm/requirements.html": "dc6ff959731f0a446953f9b3593ffe5b13fb2ccfb244f2e01b53bde1b755a7d4",
     "pm/requirements.js": "b5c867526a2dfc3c0595066758ec28c3fdb8cddddee39802c8041782ee771931",
-    "pm/requirements.py": "1834ebac1958f54c08cad3b5a9fa650e5e58663946c43688198d488511163089",
+    "pm/requirements.py": "f90743a6447e628c459d638ec2df7b672a319776b222d779c2b1a120f217cca6",
     "pm/requirements_cli.py": "89997019414b3aae591341e38bcce0c1c9e6430dd19af0f265896fbb022f0e2c",
-    "pm/review_task.py": "041ce5586aff55545c4eee26ceadcad4ed0a8e9faad4943ecf3283f36111e664",
     "pm/reviewer_process.py": "186a7de9c2c6b4b00267280a1d220f249a48db7873b383a2dc547644dd1de342",
+    "pm/review_task.py": "041ce5586aff55545c4eee26ceadcad4ed0a8e9faad4943ecf3283f36111e664",
+    "pm/roles_gate.py": "e3c25dfb6122ad29a94dac65cea0a24c902295f24953425205f371e620954542",
     "pm/role_dispatch.py": "a20870de1a26cf3098f913d3d05188554f2555eb30d3a0bf3ba8dced5db6c9be",
-    "pm/roles_gate.py": "bbe83ac22624e8d5c598d13016feced7c0c31c1aee314bfdc334c7daad5b980d",
     "pm/run_validation.py": "c1b504d18e405fb228ffb19786dd877069b9d7181e6bafe4c1fc480c97a5af45",
     "pm/secured_kernel.py": "d6e56152b81fc31349595edac0b914a1efbe9db3cc70ad17472f5b9387ba81c0",
     "pm/synthetic_reviewer.py": "649bb58e09bab100180ce62af37cbb50aa00bb30f5fdbb1a75bb254b73bafb96",
@@ -35,8 +35,8 @@
     "pm/test_exception_flow.py": "7e373f9be164a8773a8ccf7b8e216b311c768c8586a7df919e2ac813ce3a2677",
     "pm/test_governed_flow.py": "2e2b0e81ec42d3ccb7c0dc6ff3f98707bacc5ad4172ae2b552f79fcff9e079b2",
     "pm/test_public_boundaries.py": "3dfe0f8bc45ac527202725ca6b90cee968a06bdcaff04c211047399f60a92db1",
+    "pm/test_requirements.py": "da946050f42c7d35c5c40bbe17c38e495792a861953c99d4103439c9385717dd",
     "pm/test_roles_gate.py": "be9c16c232c2fb2f4a4225da03722fd9f98bd3674af7627d9f2430d44b57f063",
-    "pm/test_requirements.py": "8f45da3450930d45880324df2cc11aecad93f9bc31b066bff9f77b94706dcb23",
     "pm/verify_acceptance.py": "86a5686b741a98492fda29b4cfd29379d33a4edd33a6549e0f9955630d0325e0"
   },
   "reproduce": "PYTHONDONTWRITEBYTECODE=1 python3 pm/check.py --report-dir <new-private-report-directory>",
@@ -85,28 +85,13 @@
     "failed": 0,
     "blocked": 1
   },
-  "requirements_tests": 12,
+  "requirements_tests": 25,
   "browser": {
-    "pass": true,
-    "browserRenderingTested": true,
+    "pass": null,
+    "status": "NOT_VERIFIED_CURRENT_SOURCE",
+    "browserRenderingTested": false,
     "realHTTP": true,
-    "steps": [
-      "会话登记",
-      "需求池真实入口",
-      "新增需求",
-      "追加讨论",
-      "after_task暂缓",
-      "未闭合阻塞转换",
-      "暂缓筛选",
-      "更新条件优先级",
-      "转换PENDING",
-      "双向来源显示",
-      "执行按钮未授权禁用",
-      "真实审批阻塞模型未配置"
-    ],
-    "pageErrors": [],
-    "realApproval": false,
-    "containerExecution": false
+    "historical_evidence": "historical-candidates.json#requirements_pool_browser_history"
   },
   "source_review": {
     "status": "TIMEOUT_UNKNOWN_NO_RESEND",
@@ -122,5 +107,15 @@
     "源码独立模型调用超时，未获得结论，不重发未知调用",
     "无提醒、cron、自动批准、自动派发、业务或主 PM 激活"
   ],
-  "private_values_published": false
+  "private_values_published": false,
+  "source_commit": null,
+  "source_binding": "测试绑定本文件 source_hashes；发布 commit 由 Git 包含关系及私有 FINAL 单独记录，不以父提交冒充测试版本",
+  "environment": "已有固定 Linux Docker；源码只读、network none、runtime /tmp；无 Docker socket；无真实模型",
+  "checkpoint_regression": [
+    "checkpoint_concurrent_commit_uses_one_snapshot",
+    "fold_checkpoint_read_precedes_database_snapshot",
+    "export_validation_and_rows_share_snapshot",
+    "parallel_checkpoint_append_and_failure_no_deadlock",
+    "governance_loss_and_truncated_history_fail_closed"
+  ]
 }

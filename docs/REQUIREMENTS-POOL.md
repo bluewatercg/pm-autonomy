@@ -73,7 +73,9 @@ python3 pm/requirements_cli.py --root /tmp/pm-runtime --session-file /tmp/pm-ses
 | `defer` | `reason / after_task` |
 | `convert` | `proposal_version / proposal_hash / scope`，从当前 `/api/card` 获取；不能凭空造批准 |
 
-同一个回环服务提供 `GET /api/requirements`、`GET /api/requirements/<id>`、`POST /api/requirements`。复用 HttpOnly SameSite capability 会话和 CSRF/Host/Origin 校验，actor 从服务会话派生。`approval_api.py --discussion-session` 发放已由 bootstrap policy 允许的 discussion 能力，可读写讨论、暂缓和决定记录，不能转换、批准或执行。normal 可转换正常合成合同，仍须另行批准。角色名称和请求自报身份都不授予权限。这是本地能力边界，不是实名多人账户系统。
+同一个回环服务提供 `GET /api/requirements`、`GET /api/requirements/<id>`、`POST /api/requirements`。复用 HttpOnly SameSite capability 会话和 CSRF/Host/Origin 校验，actor 从服务会话派生。`approval_api.py --discussion-session` 发放已由 bootstrap policy 允许的 discussion 能力，可读写讨论、更新和暂缓，不能设置 `rejected`/`superseded` 终态，也不能转换、批准或执行；`normal`/`destructive` 才能写这两种终态，normal 可转换正常合成合同，仍须另行批准。角色名称和请求自报身份都不授予权限。这是本地能力边界，不是实名多人账户系统。
+
+每个请求都会重新 `load_store`。恢复先只读核对卡片 version/parent hash、治理事件链和控制源码漂移，再同步本地投影；恢复失败保持零写。后继只会把精确父版本的未完成父卡标为 `SUPERSEDED`，不会更新 `COMPLETED_SYNTHETIC` 或历史 `CLOSED` 回执，因此已完成任务和 `after_task` 依赖仍可恢复。治理库丢失或历史截断按未知阻塞，不能自动重注册；正常首次初始化和新需求注册仍可登记。SQLite 事务内不写投影，提交后由请求恢复路径同步。
 
 ## 验证证据等级
 

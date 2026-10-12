@@ -56,5 +56,7 @@
     "skills/pm-new-project-onboarding/SKILL.md",
     "skills/pm-new-project-onboarding/assets/checklist.md",
     "skills/pm-new-project-onboarding/references/PLAN.md"
-  ]
+  ],
+  "release_basis": "bda72c0c4cf74300089a7aa11b2e238aed011d4b",
+  "source_binding": "docs/evidence/requirements-pool.json#source_hashes"
 }

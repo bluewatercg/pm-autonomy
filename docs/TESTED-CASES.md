@@ -12,7 +12,7 @@
 | **原隔离候选已跑但未等价迁移** | 原独立报告、结果及源码快照逐项核对，公开仅白名单摘要；真实模型或容器测试属于当时候选 | 不能把历史 PASS 当当前公开版本全 PASS；不能在公开仓库假装拥有完整历史复跑入口 |
 | **仅设计/待实测** | 用于理解目标工作流或接入提案，缺少对应完整实测 | 不能作为已有产品能力或启用依据 |
 
-公开代码基线为 `b20c1ba5a7e1c831f4573693b354c62504a969c0`。原公开测试对应 `6e339a8e621a6d53d5a5ac90b5fbbab4a46f1ffa`；核对两提交的全部 `pm/` 文件逐字节相同。两次文档更新没有改变运行时，本轮没有重跑长运行时测试。[公开测试摘要](evidence/public-current.json)记录两者关系及源码 SHA-256。
+本轮以公开 `bda72c0c4cf74300089a7aa11b2e238aed011d4b` 为发布父基线，修复源码后实际重跑完整 `check.py`；测试绑定[公开测试摘要](evidence/public-current.json)中的当前源码 SHA-256，不把父提交当测试版本。下文 C01–C10 中标注“原公开”的结果与提交均为历史归属；当前运行结果以本轮摘要及 successor 修复案例为准。当前源码没有浏览器渲染验证；旧需求池浏览器结果仅归属[历史摘要](evidence/historical-candidates.json)中的旧源码。
 
 历史候选不是可确认 Git commit 的公开检出。其实际测试版本用冻结快照的日期、版本和源码 SHA-256 标识，`source_commit` 明确为 null，绝不用后来的公开 commit 冒充当时测试源码。[历史摘要](evidence/historical-candidates.json)保留各期结果和边界；来源路径、原报告及原结果哈希映射仅在发布者本地保留。公开摘要不提供私人原始模型输出、配置、审批凭据或服务器信息。
 
@@ -74,7 +74,7 @@
 - **PM 怎么做：** [边界测试](../pm/test_boundary.py)逐字段制造错误，检查精确拒绝码；[bridge](../pm/bridge.py)验签后仍查登记、时效、源摘要和实际 Git baseline。批准不是无范围的长期通行证。
 - **观察结果：** 原公开 34 个协议单测包含 scope/base/actions/expiry、授权过期、旧版本撤销和 baseline/artifact drift 拒绝。历史下一阶段另有真实 HEAD 漂移拒绝，历史审批 v8 另有真实 Git 与签名回归；这些属于不同证据层。
 - **验收标准：** 输入不匹配不得批准或派发；drift 后保持待核对；修改生成后继并撤销旧授权；不能仅凭合法签名跳过状态登记。
-- **测试版本与环境：** 公开实际测试提交 `6e339a8`，当前基线 `b20c1ba` 同源码；Linux/WSL、标准库 unittest、synthetic Store/FakeRemote。历史真实 Git 测试环境另列于历史摘要。
+- **测试版本与环境：** 公开实际测试提交 `6e339a8`，当时基线 `b20c1ba` 同源码；不代表当前 successor；Linux/WSL、标准库 unittest、synthetic Store/FakeRemote。历史真实 Git 测试环境另列于历史摘要。
 - **不证明什么：** 协议单测中的 fake baseline 是实际 Git 查询，或公开 Docker 执行已成功；HMAC 不能抵抗能读写私有状态的同 UID 管理者。
 - **复现入口：** R1 执行完整分层检查；其 protocol 实际运行 `python3 -m unittest test_approval test_boundary test_public_boundaries -v`，工作目录为新初始化的 fixture 副本。不要直接在 `pm/` 原目录运行依赖生成配置的测试。等级为公开当前版本可复现。
 
@@ -96,7 +96,7 @@
 - **PM 怎么做：** 独立新进程读取绑定状态，检查审查 verdict、有效期、方案版本、scope/base/source、角色与 policy；重复错误另绑 epoch，结案另绑 acceptance。先审查再通过相应 gate。
 - **观察结果：** 公开原测试 25 PASS / 0 FAIL；缺审查、FAIL、TIMEOUT、过期、版本/范围/摘要漂移阻塞；合法对照放行。验收前的结案审查在验收后失效，`review-is-not-acceptance` 拒绝。
 - **验收标准：** 必需审查不可略过；后继保留错误历史、旧审查不能复用；审查、独立验收、用户批准分别成立。
-- **测试版本与环境：** 公开提交 `6e339a8` 与当前同源码；Linux/WSL、标准库、新进程 synthetic reviewer。历史 v8 另有真实 architect 进程 PASS，仅为语义静态审查，未迁移为公开真实模型验收。
+- **测试版本与环境：** 公开提交 `6e339a8` 与该次历史基线同源码；不代表当前 successor；Linux/WSL、标准库、新进程 synthetic reviewer。历史 v8 另有真实 architect 进程 PASS，仅为语义静态审查，未迁移为公开真实模型验收。
 - **不证明什么：** synthetic TIMEOUT 是真实模型超时、25 PASS 证明模型判断正确，或六个角色都实际调用过模型。
 - **复现入口：** R1 的 architect-gates 运行组实际调用新 fixture 副本内 `test_roles_gate.py`；[测试源码](../pm/test_roles_gate.py)与[运行门](../pm/roles_gate.py)可核对。等级为公开当前版本可复现。
 
@@ -107,7 +107,7 @@
 - **PM 怎么做：** 保留 R1 和 FAIL；主助手收窄允许生成代码的权限，只开放一参数 `type(limit)`，补反例与约束；同 T4 追加 R2，输入旧拒绝意见并重新执行、评审、验收。公开异常机制还登记独立 failure occurrence，并跨版本保留同任务错误历史。
 - **观察结果：** 历史 T4 R2 修复后 accepted；有一次历史 reviewer 超时和人工 deadline 调整，未掩盖。公开异常测试 8 PASS / 0 FAIL：同 occurrence 重放去重，新失败仍累计，第三次派发因重复错误 gate 阻塞，后继保留历史。
 - **验收标准：** 失败记录不覆盖；原承诺内返工追加尝试；新的失败与重复应用同一失败必须区分；真实产物通过反例和独立验收才接受。
-- **测试版本与环境：** 历史四任务 2026-10-09；公开异常机制实际测试于 `6e339a8`，当前同源码、Linux/WSL、标准库合成派发异常。
+- **测试版本与环境：** 历史四任务 2026-10-09；公开异常机制实际测试于 `6e339a8`，该次历史基线同源码；不代表当前 successor、Linux/WSL、标准库合成派发异常。
 - **不证明什么：** PM 自主发现并修复所有问题，当前已提供通用 run 档案 API 或备注能自动改方案/代码。
 - **复现入口：** 历史返工按 R2 核对 selected_runs；公开登记按 R1 的 exception-recovery 组，实际调用 [test_exception_flow.py](../pm/test_exception_flow.py)。两条证据分别为历史候选和公开可复现。
 
@@ -118,7 +118,7 @@
 - **PM 怎么做：** 已持久结果用原主体/版本/request 恢复，不重派；相同 request 不同 payload 拒绝。有 intent 而无完整 result 时返回 `DISPATCH_RESULT_UNKNOWN_MANUAL_REVIEW_NO_RESEND`，等待调查。
 - **观察结果：** 公开 `test_actual_successor_process_crash_recovers` 真正新进程 `os._exit(87)` 后，登记的后继恢复为 version 2、PENDING、revision_required。`test_unknown_dispatch_blocks_without_resend` 留 intent 并验证不生成派发 result。公开 protocol 含审批中断与重复执行缓存；历史下一阶段还有 10 个真实进程故障点和模型结果未知 `blocked_unknown`。
 - **验收标准：** 不丢后继、不重复应用已知结果；未知结果不盲重派；失败验收不提前结案；旧版本或跨主体不借恢复扩权。
-- **测试版本与环境：** 公开 `6e339a8`，当前同源码；标准库、Linux/WSL、临时目录和真实子进程。历史额外 fault points 的源码版本与结果见历史摘要。
+- **测试版本与环境：** 公开 `6e339a8`，该次历史基线同源码；不代表当前 successor；标准库、Linux/WSL、临时目录和真实子进程。历史额外 fault points 的源码版本与结果见历史摘要。
 - **不证明什么：** 每个公开中断测试都执行了 Docker、断电和磁盘故障可恢复、外部 provider exactly-once。公开审批 interruption 的 dispatch 包含 fixture；历史 provider 缺退出证据时保守阻塞。
 - **复现入口：** R1 protocol 组运行 [test_public_boundaries.py](../pm/test_public_boundaries.py)与 [test_boundary.py](../pm/test_boundary.py)。历史模型恢复记录只按 R2 查看，不调用外部模型。等级为公开当前版本可复现，历史更多点未等价迁移。
 
@@ -129,7 +129,7 @@
 - **PM 怎么做：** 校验 Host/Origin/CSRF、会话主体、版本与各绑定字段；批准仅生成待执行授权，执行另点。修改需备注、生成待修订后继并撤销旧授权；驳回不得执行。离线 HTML 操作禁用。
 - **观察结果：** 公开 protocol 与 Node VM 9 checks 通过；`browserRenderingTested=false`。历史 v8 正式 human 任务 version 1、PENDING、decisions/outbox/sessions 均为 0。测试里的批准和 `CAPABILITY_HOLDER_ACTION` 来自自动 fixture，不能声称真人审批已完成。
 - **验收标准：** 初始化和确认会话都不自动批准；自报角色拒绝；批准、改方案、执行、验收、结案分开；修订未完成不能再批准。
-- **测试版本与环境：** 公开 `6e339a8`，当前同源码；Python HTTP/SQLite/HMAC、Node VM。历史 v8 正式任务状态来自原 FINAL 结果，未在此激活。
+- **测试版本与环境：** 公开 `6e339a8`，该次历史基线同源码；不代表当前 successor；Python HTTP/SQLite/HMAC、Node VM。历史 v8 正式任务状态来自原 FINAL 结果，未在此激活。
 - **不证明什么：** 真人亲自点击、多账户分权、浏览器真实渲染或修改备注已完成实现。真实模型审查和测试 fixture 的身份不同。
 - **复现入口：** R1；如仅查看卡片，按 R3 在新的非 fixture 目录启动本地服务。没有模型配置时批准仍阻塞；不要公开链接或私有状态。等级为公开当前版本可复现，真人审批仅待实测。
 
@@ -156,7 +156,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 pm/check.py --report-dir "$REPORT"
 python3 -c 'import json,sys; v=json.load(open(sys.argv[1])); print(json.dumps({k:v[k] for k in ("runs","passed","failed","blocked")},ensure_ascii=False,indent=2))' "$REPORT/summary.json"
 ```
 
-这不是生产运行命令：protocol 用 synthetic fixture，architect reviewer 同样为 synthetic；缺镜像不拉取。完整 Docker 测试只有本机固定镜像可用且相关权限满足时才执行，本页原公开记录仍为 BLOCKED。本轮动态核对了 CLI `--help` 和源码参数、文件及 unittest 目标，没有重跑上述完整检查。
+这不是生产运行命令：protocol 用 synthetic fixture，architect reviewer 同样为 synthetic；缺镜像不拉取。完整 Docker 测试只有本机固定镜像可用且相关权限满足时才执行，本页原公开记录仍为 BLOCKED。前序文档发布仅核对 CLI；本轮 successor 已在离线只读 Docker 中重跑完整检查，结果绑定当前摘要。
 
 ### R2：只读查看已发布的历史摘要
 
@@ -178,6 +178,20 @@ PYTHONDONTWRITEBYTECODE=1 python3 approval_api.py
 ```
 
 打开服务终端给出的本地限时 capability 链接；它是凭据，保持私有。停止本次服务使用 Ctrl+C。普通体验不要加 `--fixture`；默认未配置模型时仍不能批准或执行。
+
+## 本次 successor 修复案例
+
+本 successor 保留原 `requirements-pool-20261011-unique/source` 证据，并新增定向回归：
+
+- 历史 `COMPLETED_SYNTHETIC` 任务及 `CLOSED` 成功回执在后继恢复时保持不变，`after_task` 依赖仍可恢复为就绪。
+- `discussion` 写 `rejected`/`superseded` 被拒绝且零写；`normal` 与 `destructive` 对照可写终态；讨论、暂缓和普通更新仍可用。
+- 错误 version、父 hash、同版本投影漂移、控制源码漂移、已完成任务后继和治理库缺失/截断均 fail closed 且零写。
+- 新需求注册和正常首次治理初始化仍通过；治理历史缺失不会自动重注册。
+- `change` 先提交 SQLite 卡片与决策，再由 `load_store` 同步投影；并发请求的 checkpoint 写入有锁保护。
+
+本轮最终 Linux 容器 `check.py`：需求池 25 tests、协议/边界 34 tests 均 `OK`；architect 25/25、异常恢复 8/8、Node VM 9 checks 通过，未配置模型 HTTP 阻塞行为通过。汇总 6 PASS 运行组、0 FAIL、1 BLOCKED（完整 Docker 派发链未配置执行镜像）。外层离线 Docker 仅承载回归，不能当作 Docker 派发闭环 PASS。当前源码浏览器渲染未验证；真实模型审查仍为 `TIMEOUT_UNKNOWN_NO_RESEND`，未重发未知调用。原始 ResourceWarning 保留在私有原日志。前序报告、21 项/12 项旧计数与浏览器成功均只属于当时源码。
+
+新增确定性回归让正常 writer 在 checkpoint 的 fold 与 count 之间提交事件，逐次核对 checkpoint 的 seq/hash 配对及最终尾部；同一用例只替换旧 roles_gate 的对照组失败，修复组通过。另测 checkpoint 读取先于读快照、验证与导出共用快照、8 路 append/failure 无死锁且事件守恒。删除数据库、删尾、清空全部历史仍拒绝且不修写原历史。append/failure 在 SQLite 事务退出后才获取 checkpoint 锁，checkpoint 持文件锁进行读事务，不形成反向嵌套。事件提交到 checkpoint 更新之间的断电窗口、首次 checkpoint 前全部旁证同时丢失以及可信 UID/root 管理边界仍保留。
 
 ## 新增需求池案例
 

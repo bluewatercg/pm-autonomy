@@ -1,5 +1,6 @@
 """确定性角色/审查 gate。语义审查质量由 reviewer 承担，此处不生成通过结论。"""
 import contextlib
+import fcntl
 import hashlib
 import json
 import os
@@ -81,6 +82,10 @@ def check_snapshot(state, phase, now=None):
 class Governance:
     def __init__(self,root):
         self.root=Path(root); self.db=self.root/'private/governance.sqlite'
+        self.checkpoint=self.root/'private/governance-checkpoint.json'
+        if self.checkpoint.exists() and not self.db.exists(): raise GateDenied('GOVERNANCE_HISTORY_LOST')
+        if self.db.exists():
+            with sqlite3.connect(self.db.resolve().as_uri()+'?mode=ro',uri=True) as con: self.fold(con)
         self.db.parent.mkdir(mode=0o700,parents=True,exist_ok=True)
         with self.connect() as con:
             con.execute('CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY,kind TEXT NOT NULL,body TEXT NOT NULL,prev TEXT NOT NULL,hash TEXT NOT NULL)')
@@ -93,11 +98,27 @@ class Governance:
         finally: con.close()
     def fold(self,con):
         state={'tasks':{}}; prev='0'*64
+        # 先读 checkpoint，再建立读快照；已有写事务由 BEGIN IMMEDIATE 保证不会落后。
+        checkpoint=json.loads(self.checkpoint.read_bytes()) if self.checkpoint.exists() else None
+        if not con.in_transaction: con.execute('BEGIN')
+        count=0
         for i,(seq,kind,text,old,h) in enumerate(con.execute('SELECT * FROM events ORDER BY seq'),1):
             v=json.loads(text)
             if seq!=i or old!=prev or h!=digest({'seq':seq,'kind':kind,'body':v,'prev':old}): raise GateDenied('GOVERNANCE_CHAIN_BROKEN')
-            prev=h; self.apply(state,kind,v)
+            if checkpoint and seq==checkpoint['seq'] and h!=checkpoint['hash']: raise GateDenied('GOVERNANCE_HISTORY_LOST')
+            count=seq;prev=h; self.apply(state,kind,v)
+        if checkpoint and count<checkpoint['seq']: raise GateDenied('GOVERNANCE_HISTORY_LOST')
         return state,prev
+    def save_checkpoint(self):
+        from bridge import save
+        lock=self.checkpoint.with_suffix('.lock')
+        with lock.open('a+b') as handle:
+            fcntl.flock(handle,fcntl.LOCK_EX)
+            with self.connect() as con:
+                _,hashed=self.fold(con)
+                seq=con.execute('SELECT count(*) FROM events').fetchone()[0]
+            if seq: save(self.checkpoint,{'seq':seq,'hash':hashed})
+            # append/failure 已提交并释放 SQLite 写锁才进入此处；不反向嵌套两把锁。
     @staticmethod
     def apply(state,kind,v):
         task=v['task']
@@ -117,6 +138,7 @@ class Governance:
             seq=con.execute('SELECT count(*) FROM events').fetchone()[0]+1
             body={'seq':seq,'kind':kind,'body':v,'prev':prev}
             con.execute('INSERT INTO events VALUES(?,?,?,?,?)',(seq,kind,canonical(v),prev,digest(body)))
+        self.save_checkpoint()
     def register(self,card,policy):
         load_roles(self.root/'roles.json'); b=binding(card,sha((self.root/'roles.json').read_bytes()))
         def validate(state):
@@ -149,6 +171,7 @@ class Governance:
             v={'task':card['task'],'error_class':error_class,'evidence':evidence}
             seq=con.execute('SELECT count(*) FROM events').fetchone()[0]+1
             con.execute('INSERT INTO events VALUES(?,?,?,?,?)',(seq,'failure',canonical(v),prev,digest({'seq':seq,'kind':'failure','body':v,'prev':prev})))
+        self.save_checkpoint()
     def record_review(self,card,trigger,path,producer,expiry):
         s=self.snapshot(card);p=self.root/path
         if p.is_symlink() or p.parent.resolve()!=self.root.resolve()/'reviews': raise GateDenied('ARCHITECT_PATH_DENIED')

@@ -7,40 +7,79 @@ R=Path(__file__).resolve().parent
 
 def load_store(root=R):
     root=Path(root);private=root/'private'
-    p=bridge.read_proposal(root)
+    projected=bridge.read_proposal(root)
     db=private/'approval/approval.sqlite'
+    cards=[]; evidence=[]
     if db.exists():
-        with sqlite3.connect(db) as con:
-            row=con.execute('SELECT body FROM cards ORDER BY version DESC LIMIT 1').fetchone()
-        if row:
-            durable=json.loads(row[0])
-            if durable['version']>p['version']:
-                # 提案文件是 SQLite 卡片的可恢复投影，事务提交前不写它。
-                bridge.save(private/'active-proposal.json',durable);p=durable
+        with sqlite3.connect(db.resolve().as_uri()+'?mode=ro',uri=True) as con:
+            for version,raw,status in con.execute('SELECT * FROM cards ORDER BY version'):
+                card=json.loads(raw)
+                if type(card.get('version')) is not int or card['version']!=version: raise Denied('REMOTE_VERSION_CONFLICT',409)
+                cards.append((card,status))
+            evidence=[json.loads(raw)['body']['proposal_hash'] for raw, in con.execute('SELECT receipt FROM outbox')]
+            dirty=bool(con.execute('SELECT 1 FROM decisions LIMIT 1').fetchone() or con.execute('SELECT 1 FROM failure_occurrences LIMIT 1').fetchone() or evidence or any(status!='PENDING' for _,status in cards))
+    else: dirty=False
+    def successor(new,old):
+        if type(new.get('version')) is not int or new['version']!=old['version']+1 or new.get('parent_proposal_hash')!=digest(old):
+            raise Denied('REMOTE_VERSION_CONFLICT',409)
+    for index,(card,status) in enumerate(cards):
+        if index:
+            parent,parent_status=cards[index-1];successor(card,parent)
+            if card['task']==parent['task'] and parent_status=='COMPLETED_SYNTHETIC': raise Denied('COMPLETED_TASK_SUCCESSOR_DENIED',409)
+    durable=cards[-1][0] if cards else projected
+    if projected['version']<=durable['version']:
+        matched=next((card for card,_ in cards if card['version']==projected['version']),durable if not cards else None)
+        if matched is None or digest(matched)!=digest(projected): raise Denied('REMOTE_PROJECTION_DRIFT',409)
+        p=durable
+    else:
+        successor(projected,durable);p=projected
+    from roles_gate import Governance,GateDenied,load_roles
+    if not (private/'governance.sqlite').exists() and dirty:
+        raise Denied('GOVERNANCE_HISTORY_LOST',409)
+    governance=Governance(root)
+    events=governance.export_events()
+    if not events and dirty: raise Denied('GOVERNANCE_HISTORY_LOST',409)
+    registrations=[e['body']['card'] for e in events if e['kind']=='register']
+    registered=[card for card in registrations if card['task']==p['task']]
+    if registered and registered[-1]['version']>p['version']:
+        new=registered[-1];successor(new,p);p=new
+    if p['version']>durable['version']:
+        successor(p,durable)
+        if p['task']==durable['task'] and cards and cards[-1][1]=='COMPLETED_SYNTHETIC':
+            raise Denied('COMPLETED_TASK_SUCCESSOR_DENIED',409)
+    # 先完成全部只读校验，再允许登记、SQLite 恢复及投影写入。
+    planned=[]
+    latest={card['task']:card for card,_ in cards}
+    latest[p['task']]=p
+    for card in latest.values():
+        if 'governance_policy' not in card: continue
+        for name,hashed in card.get('control_sources',{}).items():
+            if Path(name).name!=name or bridge.sha((root/name).read_bytes())!=hashed: raise Denied('CONTROL_SOURCE_DRIFT',409)
+        prior=[item for item in registrations if item['task']==card['task']]
+        if prior and digest(prior[-1])==digest(card):
+            try: governance.snapshot(card)
+            except GateDenied as exc:
+                if exc.code!='BLOCKED_MODEL_NOT_CONFIGURED': raise
+        else:
+            if prior:
+                successor(card,prior[-1])
+                if card['governance_policy']!=prior[-1]['governance_policy']: raise Denied('GOVERNANCE_BINDING_DRIFT',409)
+            elif digest(card) in evidence or any(old['task']==card['task'] and status!='PENDING' for old,status in cards) or any(old['task']==card['task'] and old['version']<card['version'] for old,_ in cards):
+                raise Denied('GOVERNANCE_HISTORY_LOST',409)
+            try: load_roles(root/'roles.json')
+            except GateDenied as exc:
+                if exc.code!='BLOCKED_MODEL_NOT_CONFIGURED': raise
+            planned.append(card)
+    for card in planned:
+        try: governance.register(card,card['governance_policy'])
+        except GateDenied as exc:
+            if exc.code!='BLOCKED_MODEL_NOT_CONFIGURED': raise
+    if events and not governance.checkpoint.exists(): governance.save_checkpoint()
     key=(private/'bridge-key.bin').read_bytes()
     def sync(new):
-        old=bridge.read_proposal(root)
-        if new['version']!=old['version']+1 or new['parent_proposal_hash']!=digest(old):raise Denied('REMOTE_VERSION_CONFLICT',409)
-        if 'governance_policy' in new:
-            governance.register(new,new['governance_policy'])
-        bridge.save(private/'active-proposal.json',new)
-    from roles_gate import Governance
-    governance=Governance(root)
-    registered=[e['body']['card'] for e in governance.export_events() if e['kind']=='register' and e['body']['task']==p['task']]
-    if registered and registered[-1]['version']>p['version']:
-        successor=registered[-1]
-        if successor['version']!=p['version']+1 or successor.get('parent_proposal_hash')!=digest(p):raise Denied('GOVERNANCE_SUCCESSOR_RECOVERY_CONFLICT',409)
-        bridge.save(private/'active-proposal.json',successor);p=successor
-    if 'governance_policy' in p:
-        try:
-            governance.snapshot(p)
-        except Exception as exc:
-            if getattr(exc, 'code', '') == 'GOVERNANCE_TASK_UNREGISTERED':
-                try: governance.register(p, p['governance_policy'])
-                except Exception as blocked:
-                    if getattr(blocked,'code','')!='BLOCKED_MODEL_NOT_CONFIGURED': raise
-            elif getattr(exc, 'code', '') != 'BLOCKED_MODEL_NOT_CONFIGURED':
-                raise
+        # 调用者已提交 SQLite；统一使用 load_store 恢复治理和文件投影。
+        recovered=load_store(root)
+        if recovered.card()['proposal_hash']!=digest(new): raise Denied('REMOTE_VERSION_CONFLICT',409)
     def gate(card,phase,result=None):
         if 'governance_policy' not in card:
             return {'legacy_regression_only':True}
@@ -73,18 +112,28 @@ def load_store(root=R):
     state=private/'sessions.json'
     if state.exists():
         v=json.loads(state.read_bytes());store.sessions=v['sessions'];store.capabilities=v['capabilities'];store.challenge=v['challenge']
-    active=bridge.read_proposal(root)
-    if active['version']>store.card()['proposal']['version']:
+    if p['version']>store.card()['proposal']['version']:
         with store.connect() as con:
-            con.execute("UPDATE cards SET status='SUPERSEDED'")
-            con.execute("UPDATE outbox SET phase='REVOKED' WHERE phase!='CLOSED'")
-            con.execute('INSERT INTO cards VALUES(?,?,?)',(active['version'],canonical(active),'PENDING'))
+            con.execute('BEGIN IMMEDIATE')
+            raw,status=con.execute('SELECT body,status FROM cards ORDER BY version DESC LIMIT 1').fetchone()
+            parent=json.loads(raw);successor(p,parent)
+            if status!='COMPLETED_SYNTHETIC':
+                con.execute("UPDATE cards SET status='SUPERSEDED' WHERE version=? AND body=? AND status!='COMPLETED_SYNTHETIC'",(parent['version'],raw))
+            for rid,receipt in con.execute("SELECT id,receipt FROM outbox WHERE phase!='CLOSED'").fetchall():
+                body=json.loads(receipt)['body']
+                if body.get('proposal_hash')==digest(parent) and body.get('version')==parent['version']:
+                    con.execute("UPDATE outbox SET phase='REVOKED' WHERE id=? AND phase!='CLOSED'",(rid,))
+            con.execute('INSERT INTO cards VALUES(?,?,?)',(p['version'],canonical(p),'PENDING'))
+    if digest(projected)!=digest(p): bridge.save(private/'active-proposal.json',p)
     return store
 
 def call(op,value=None):
     with (R/'private/approval.lock').open('a+b') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
-        store=load_store(R)
+        from roles_gate import GateDenied
+        try: store=load_store(R)
+        except Denied as exc: return {'ok':False,'code':exc.code,'status':exc.status}
+        except GateDenied as exc: return {'ok':False,'code':exc.code,'status':409}
         try:
             if op=='card':result=store.card()
             elif op=='challenge':result=store.challenge

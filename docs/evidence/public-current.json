@@ -3,35 +3,40 @@
   "level": "公开当前版本可复现",
   "period": "2026-10-11",
   "activation": "NOT_IN_FORCE",
-  "public_source_commit": "b20c1ba5a7e1c831f4573693b354c62504a969c0",
-  "actual_test_source_commit": "6e339a8e621a6d53d5a5ac90b5fbbab4a46f1ffa",
-  "source_equivalence": "pm 文件逐字节一致；本轮为文档更新，没有重跑完整运行时",
-  "environment": "Linux/WSL; Python standard library; Git; Node VM; synthetic reviewer; no external model",
+  "public_source_commit": null,
+  "actual_test_source_commit": null,
+  "source_equivalence": "本轮实际重跑；源码摘要为当前 pm 文件。旧提交证据不等价于 successor；发布 SHA 由 Git 记录。",
+  "environment": "已有固定 Linux Docker；源码只读、network none、runtime /tmp；无 Docker socket；无真实模型",
   "runs": [
     {
       "name": "protocol",
-      "status": "PASS",
-      "rc": 0
+      "rc": 0,
+      "status": "PASS"
     },
     {
       "name": "unconfigured-runtime-http",
-      "status": "PASS",
-      "rc": 0
+      "rc": 0,
+      "status": "PASS"
+    },
+    {
+      "name": "requirements-pool",
+      "rc": 0,
+      "status": "PASS"
     },
     {
       "name": "architect-gates",
-      "status": "PASS",
-      "rc": 0
+      "rc": 0,
+      "status": "PASS"
     },
     {
       "name": "exception-recovery",
-      "status": "PASS",
-      "rc": 0
+      "rc": 0,
+      "status": "PASS"
     },
     {
       "name": "card-logic",
-      "status": "PASS",
-      "rc": 0
+      "rc": 0,
+      "status": "PASS"
     },
     {
       "name": "docker-governed-flow-and-regression",
@@ -40,7 +45,7 @@
     }
   ],
   "run_counts": {
-    "PASS": 5,
+    "PASS": 6,
     "FAIL": 0,
     "BLOCKED": 1
   },
@@ -217,15 +222,15 @@
   "source_code_hashes": [
     {
       "file": "pm/approval-card.html",
-      "sha256": "1b487700dd3e99a148a0f3a74a56c437e60a5e3178deac3a2a31b1d7d10a6742"
+      "sha256": "8f1566790f414346e0e3308c8880ca90ced154d80109433f22e13a1ad79700db"
     },
     {
       "file": "pm/approval_api.py",
-      "sha256": "1e4c00d6718b98276f31f34767ab56f5f58675852f17409d03149220e76d27fc"
+      "sha256": "50ddf24d9269d2571bf7402d32b8623746c6bf918ebd8aa0288d5a5f2d3e7a7d"
     },
     {
       "file": "pm/audit_public.py",
-      "sha256": "82c69943de411d0202aff944c4c082c695919dd87c857398cdb95e3572ecd9cc"
+      "sha256": "b0fd8fd1ec93ac0341ab07887d62391e5c0a36b77e62f5332158ab32d15c2aff"
     },
     {
       "file": "pm/bridge.py",
@@ -233,11 +238,11 @@
     },
     {
       "file": "pm/card.js",
-      "sha256": "f4a206c7402ffd03425dd3cfe46b49b093c923ce5457a19796895ba567e40f39"
+      "sha256": "a2042ff4b03b3e2df0ed25bfaccbffa660b88d853a3c3bbcb056d52557c41f74"
     },
     {
       "file": "pm/check.py",
-      "sha256": "f77e51b32775a73fe671eed11459f58022d1340bc3077c218f0c6e61d6df40a4"
+      "sha256": "058e3307e76b308e851a2ca15dce06c7e19a44abade2f0fd1f3a20b5b79d796f"
     },
     {
       "file": "pm/container_task.py",
@@ -257,7 +262,7 @@
     },
     {
       "file": "pm/initialize.py",
-      "sha256": "d8d949a5a2ef318c3a7b88bf2651394f3fa0bda966033c7b15ee7b071bd57655"
+      "sha256": "e8bf9d00def3fd3a73951aab6a410061e049efc3295f247889e9793ced00437a"
     },
     {
       "file": "pm/model_adapter.py",
@@ -269,7 +274,23 @@
     },
     {
       "file": "pm/remote_store.py",
-      "sha256": "6fc4ddd2b1adfc73a988be7b455cf960fc5fa20ee65ac54115d5490879fe30b7"
+      "sha256": "7f5c014c537afa5796906866b4d22541409cc6b0211e81bd6663d3766595b310"
+    },
+    {
+      "file": "pm/requirements.html",
+      "sha256": "dc6ff959731f0a446953f9b3593ffe5b13fb2ccfb244f2e01b53bde1b755a7d4"
+    },
+    {
+      "file": "pm/requirements.js",
+      "sha256": "b5c867526a2dfc3c0595066758ec28c3fdb8cddddee39802c8041782ee771931"
+    },
+    {
+      "file": "pm/requirements.py",
+      "sha256": "f90743a6447e628c459d638ec2df7b672a319776b222d779c2b1a120f217cca6"
+    },
+    {
+      "file": "pm/requirements_cli.py",
+      "sha256": "89997019414b3aae591341e38bcce0c1c9e6430dd19af0f265896fbb022f0e2c"
     },
     {
       "file": "pm/review_task.py",
@@ -285,7 +306,7 @@
     },
     {
       "file": "pm/roles_gate.py",
-      "sha256": "bbe83ac22624e8d5c598d13016feced7c0c31c1aee314bfdc334c7daad5b980d"
+      "sha256": "e3c25dfb6122ad29a94dac65cea0a24c902295f24953425205f371e620954542"
     },
     {
       "file": "pm/run_validation.py",
@@ -324,6 +345,10 @@
       "sha256": "3dfe0f8bc45ac527202725ca6b90cee968a06bdcaff04c211047399f60a92db1"
     },
     {
+      "file": "pm/test_requirements.py",
+      "sha256": "da946050f42c7d35c5c40bbe17c38e495792a861953c99d4103439c9385717dd"
+    },
+    {
       "file": "pm/test_roles_gate.py",
       "sha256": "be9c16c232c2fb2f4a4225da03722fd9f98bd3674af7627d9f2430d44b57f063"
     },
@@ -331,5 +356,20 @@
       "file": "pm/verify_acceptance.py",
       "sha256": "86a5686b741a98492fda29b4cfd29379d33a4edd33a6549e0f9955630d0325e0"
     }
-  ]
+  ],
+  "base_commit": "bda72c0c4cf74300089a7aa11b2e238aed011d4b",
+  "requirements_tests": 25,
+  "browser": {
+    "pass": null,
+    "status": "NOT_VERIFIED_CURRENT_SOURCE",
+    "browserRenderingTested": false,
+    "realHTTP": true,
+    "historical_evidence": "historical-candidates.json#requirements_pool_browser_history"
+  },
+  "source_review": {
+    "status": "TIMEOUT_UNKNOWN_NO_RESEND",
+    "real_model_review": false,
+    "runtime_approval": false,
+    "final_source_reviewed": false
+  }
 }
