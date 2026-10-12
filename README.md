@@ -29,6 +29,14 @@
 
 当前自然语言 intake 有结构化分类 `FIRST / OPTIMIZATION / AMBIGUOUS / DESTRUCTIVE`：已有已验收上下文且保留行为的增量需求应为 `OPTIMIZATION`；不清楚则暂停澄清；移除或反转已验收合同走破坏性分支。这套 schema **限定合成 `history.py` scope**，分类结果不会自动变成通用业务审批卡或代码执行计划。
 
+### 已实现的需求池
+
+聊过但还没确定的想法可以先登记，再讨论、暂缓或拒绝。打开审批服务并确认能力会话后，点击“打开需求池”；页面支持追加讨论、负责人/优先级、待解决问题、安排在已登记任务验收闭合之后，以及待决策/暂缓筛选。来源只保存摘要引用、带时区时间和待确认标记，不导入完整聊天或猜测历史批准。
+
+条件满足只显示 `ready_for_decision`，不会提醒、批准或执行。确定后转换成 **PENDING 待审批提案**，保留需求历史并建立双向来源链接；当前只绑定已有 `history.py` 合成排序合同，不能将任意业务想法自动变成执行计划。讨论会话不具有转换、批准或执行能力。
+
+[需求池完整示例、CLI/API 与证据等级](docs/REQUIREMENTS-POOL.md)说明“想法 → 暂缓 after_task → 讨论 → 待审批 → 批准”的实际操作。`python3 pm/requirements_cli.py --help` 可安全查看 read/list/add/note/update/state/defer/convert/archive；`check.py` 已包含真实 HTTP/SQLite/新进程并发与中断恢复测试。运行数据和单需求 archive 投影只留私有 runtime。
+
 ### feature、task、run 和关系
 
 以下是接入 skills 的档案约定，当前运行时没有完整通用 feature/task/run 管理接口或关系图执行引擎。
@@ -101,7 +109,7 @@ python3 pm/check.py --help
 python3 pm/approval_api.py --help
 ```
 
-`approval_api.py` 提供 `--port`、`--open-browser` 和 `--destructive-session`。默认 bootstrap policy 只允许 `normal`，单独指定破坏性会话参数不会获得该权限。
+`approval_api.py` 提供 `--port`、`--open-browser`、`--discussion-session` 和 `--destructive-session`。默认 bootstrap policy 允许 `normal` 和仅需求讨论的 `discussion`；破坏性能力仍须另行配置，启动参数不能扩权。
 
 ### 模型配置与建议入口
 

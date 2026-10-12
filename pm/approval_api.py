@@ -17,7 +17,8 @@ def signature(key, value):
     return hmac.new(key, canonical(value).encode(), 'sha256').hexdigest()
 
 class Store:
-    def __init__(self, root, proposal, key, baseline, dispatch, sync_version, gate=None, recover=None):
+    def __init__(self, root, proposal, key, baseline, dispatch, sync_version, gate=None, recover=None, task_closed=None):
+        self.task_closed=task_closed
         self.recover=recover
         self.gate=gate
         self.root, self.key = Path(root), key
@@ -31,6 +32,8 @@ class Store:
         with self.connect() as con:
             con.executescript('CREATE TABLE IF NOT EXISTS cards(version INTEGER PRIMARY KEY,body TEXT NOT NULL,status TEXT NOT NULL); CREATE TABLE IF NOT EXISTS decisions(id TEXT PRIMARY KEY,fingerprint TEXT NOT NULL,version INTEGER NOT NULL,body TEXT NOT NULL); CREATE TABLE IF NOT EXISTS outbox(id TEXT PRIMARY KEY,receipt TEXT NOT NULL,result TEXT,phase TEXT NOT NULL);')
             con.execute('CREATE TABLE IF NOT EXISTS failure_occurrences(id TEXT PRIMARY KEY,card TEXT NOT NULL,result TEXT NOT NULL,applied INTEGER NOT NULL)')
+            from requirements import schema
+            schema(con)
             if not con.execute('SELECT 1 FROM cards').fetchone():
                 con.execute('INSERT INTO cards VALUES(?,?,?)',(proposal['version'],canonical(proposal),'PENDING'))
         os.chmod(self.db,0o600)
@@ -64,7 +67,7 @@ class Store:
         with self.connect() as con:con.execute('INSERT INTO failure_occurrences VALUES(?,?,?,0)',(occurrence,canonical(card),canonical(result)))
         self.replay_failures()
     def bootstrap_capability(self, privilege='normal', ttl=600):
-        if privilege not in ('normal','destructive'): raise ValueError('privilege')
+        if privilege not in ('discussion','normal','destructive'): raise ValueError('privilege')
         token=secrets.token_urlsafe(32)
         self.capabilities[hashlib.sha256(token.encode()).hexdigest()]={'privilege':privilege,'expiry':time.time()+ttl,'used':False}
         return token
@@ -86,6 +89,7 @@ class Store:
         return session
     def decide(self, sid, csrf, data):
         session=self.session(sid,csrf)
+        if session['privilege']=='discussion': raise Denied('APPROVAL_CAPABILITY_REQUIRED')
         self.replay_failures()
         fields={'request_id','decision','version','proposal_hash','scope','base','expiry','actions','note'}
         if set(data)!=fields or data['decision'] not in ('approve','change','reject'): raise Denied('INVALID_DECISION',400)
@@ -130,8 +134,15 @@ class Store:
             result={'request_id':data['request_id'],'decision':data['decision'],'status':new_status,'version':card['version'],'proposal_hash':digest(card),'identity':'capability-holder-not-workbuddy-account','cached':False}
             con.execute('INSERT INTO decisions VALUES(?,?,?,?)',(data['request_id'],fp,card['version'],canonical(result)))
             return result
+    def requirements(self, sid, requirement_id=None):
+        from requirements import read
+        return read(self, sid, requirement_id)
+    def requirement_write(self, sid, csrf, data):
+        from requirements import mutate
+        return mutate(self, sid, csrf, data)
     def execute(self, sid, csrf, rid):
         session=self.session(sid,csrf)
+        if session['privilege']=='discussion': raise Denied('APPROVAL_CAPABILITY_REQUIRED')
         self.replay_failures()
         with self.lock:
             with self.connect() as con:
@@ -203,6 +214,12 @@ def make_server(store, port=0):
                 if self.path=='/': return self.send(200,(R/'approval-card.html').read_text(encoding='utf-8'),html=True)
                 if self.path=='/card.js':
                     raw=(R/'card.js').read_bytes(); self.send_response(200); self.send_header('Content-Type','application/javascript; charset=utf-8'); self.send_header('Content-Length',str(len(raw))); self.send_header('Cache-Control','no-store'); self.end_headers(); return self.wfile.write(raw)
+                if self.path=='/requirements': return self.send(200,(R/'requirements.html').read_text(encoding='utf-8'),html=True)
+                if self.path=='/requirements.js':
+                    raw=(R/'requirements.js').read_bytes(); self.send_response(200); self.send_header('Content-Type','application/javascript; charset=utf-8'); self.send_header('Content-Length',str(len(raw))); self.send_header('Cache-Control','no-store'); self.end_headers(); return self.wfile.write(raw)
+                if self.path=='/api/requirements': return self.send(200,store.requirements(self.sid()))
+                if self.path.startswith('/api/requirements/'):
+                    return self.send(200,store.requirements(self.sid(),self.path.split('/')[-1]))
                 if self.path=='/api/card': return self.send(200,{**store.card(),'challenge':store.challenge})
                 if self.path=='/api/session': return self.send(200,store.session(self.sid()))
                 raise Denied('NOT_FOUND',404)
@@ -218,6 +235,7 @@ def make_server(store, port=0):
                 if not isinstance(data,dict): raise Denied('JSON_OBJECT_REQUIRED',400)
                 if self.path=='/api/register':
                     sid,csrf=store.register(data); return self.send(200,{'ok':True,'csrf':csrf,'identity':'capability-holder-not-workbuddy-account'},cookie=sid)
+                if self.path=='/api/requirements': return self.send(200,store.requirement_write(self.sid(),self.headers.get('X-CSRF-Token',''),data))
                 if self.path=='/api/decision': return self.send(200,store.decide(self.sid(),self.headers.get('X-CSRF-Token',''),data))
                 if self.path=='/api/execute':
                     if set(data)!={'request_id'}: raise Denied('INVALID_REQUEST',400)
@@ -243,12 +261,14 @@ class RemoteStore:
     def session(self,sid): return self.invoke('session',sid)
     def decide(self,sid,csrf,data): return self.invoke('decide',[sid,csrf,data])
     def execute(self,sid,csrf,rid): return self.invoke('execute',[sid,csrf,rid])
+    def requirements(self,sid,requirement_id=None): return self.invoke('requirements',[sid,requirement_id])
+    def requirement_write(self,sid,csrf,data): return self.invoke('requirement_write',[sid,csrf,data])
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--port',type=int,default=0);p.add_argument('--open-browser',action='store_true');p.add_argument('--destructive-session',action='store_true');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--port',type=int,default=0);p.add_argument('--open-browser',action='store_true');privileges=p.add_mutually_exclusive_group();privileges.add_argument('--destructive-session',action='store_true');privileges.add_argument('--discussion-session',action='store_true');args=p.parse_args()
     store=RemoteStore()
     server=make_server(store,args.port)
-    token=store.bootstrap_capability('destructive' if args.destructive_session else 'normal')
+    token=store.bootstrap_capability('destructive' if args.destructive_session else 'discussion' if args.discussion_session else 'normal')
     url='http://127.0.0.1:'+str(server.server_port)+'/#bootstrap='+token
     print('仅回环临时入口；能力持有人测试边界，并非真实账户认证。请亲自注册和审批。',flush=True)
     print(url,flush=True)

@@ -31,6 +31,7 @@ try:
 finally:server.shutdown();server.server_close()
 """
         run('unconfigured-runtime-http',[sys.executable,'-c',smoke],runtime)
+        run('requirements-pool',[sys.executable,'-m','unittest','test_requirements','-v'],Path(__file__).resolve().parent)
         run('architect-gates',[sys.executable,str(root/'test_roles_gate.py')],root)
         run('exception-recovery',[sys.executable,str(root/'test_exception_flow.py')],root)
         if shutil.which('node'):run('card-logic',['node',str(root/'test_card.js')],root)

@@ -1,6 +1,6 @@
 'use strict';
 const $=id=>document.getElementById(id);
-let capability=new URLSearchParams(location.hash.slice(1)).get('bootstrap'), csrf='', card=null, challenge='', rid=null;
+let capability=new URLSearchParams(location.hash.slice(1)).get('bootstrap'), csrf='', card=null, challenge='', rid=null, discussionOnly=false;
 if(location.protocol!=='file:') history.replaceState(null,'',location.pathname);
 async function api(path,data){
  const options=data?{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify(data)}:{};
@@ -9,12 +9,12 @@ async function api(path,data){
  return value;
 }
 function display(value){card=value; $('proposal').textContent=JSON.stringify(value.proposal,null,2); $('status').textContent=value.status+' · '+value.identity;}
-function buttons(enabled){for(const name of ['approve','change','reject']){const allowed=card.status==='PENDING'||(name==='change'&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status));$(name).disabled=!enabled||!allowed||(name==='approve'&&card.proposal.revision_required);}}
+function buttons(enabled){enabled=enabled&&!discussionOnly;for(const name of ['approve','change','reject']){const allowed=card.status==='PENDING'||(name==='change'&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status));$(name).disabled=!enabled||!allowed||(name==='approve'&&card.proposal.revision_required);}}
 function clearRequest(){rid=null;window.lastAction=null;sessionStorage.removeItem('approval-request');}
 async function refresh(){const value=await api('/api/card');challenge=value.challenge;display(value);buttons(!!csrf);}
 function message(value){$('message').textContent=typeof value==='string'?value:JSON.stringify(value,null,2);}
 $('holder').onchange=()=>{$('register').disabled=!capability||!$('holder').checked;};
-$('register').onclick=async()=>{try{const result=await api('/api/register',{capability,challenge,confirm_capability_holder:$('holder').checked});csrf=result.csrf;capability=null;$('register').disabled=true;$('connection').textContent='会话已由能力持有人确认；任务仍待亲自审批。';await refresh();}catch(error){message(error.message);}};
+$('register').onclick=async()=>{try{const result=await api('/api/register',{capability,challenge,confirm_capability_holder:$('holder').checked});csrf=result.csrf;discussionOnly=(await api('/api/session')).privilege==='discussion';capability=null;$('register').disabled=true;$('connection').textContent='会话已由能力持有人确认；任务仍待亲自审批。';await refresh();}catch(error){message(error.message);}};
 for(const action of ['approve','change','reject']) $(action).onclick=async()=>{
  buttons(false);
  try{
@@ -39,6 +39,6 @@ $('execute').onclick=async()=>{
   return;
  }
  try{await refresh();$('connection').textContent='已连接回环审批 API；请亲自确认能力注册。';
-  try{const session=await api('/api/session');csrf=session.csrf;rid=sessionStorage.getItem('approval-request');buttons(true);if(rid&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status))$('execute').disabled=false;}catch(error){}
+  try{const session=await api('/api/session');csrf=session.csrf;discussionOnly=session.privilege==='discussion';rid=sessionStorage.getItem('approval-request');buttons(true);if(rid&&['APPROVED_EXECUTION_PENDING','EXECUTION_BLOCKED'].includes(card.status))$('execute').disabled=false;}catch(error){}
  }catch(error){$('connection').textContent='入口不可用，未取得审批。';message(error.message);}
 })();

@@ -28,7 +28,9 @@ def main():
     if (root/'.git').exists():
         def git(*args):return subprocess.check_output(['git','-C',str(root),*args])
         for commit in git('rev-list','--all').decode().splitlines():
-            names=git('ls-tree','-r','--name-only',commit).decode().splitlines();assert set(names)==allowed,'HISTORY_TREE_WHITELIST_MISMATCH'
+            names=git('ls-tree','-r','--name-only',commit).decode().splitlines()
+            historical_allowed=set(json.loads(git('show',commit+':PUBLIC_FILES.json'))['files'])
+            assert set(names)==historical_allowed,'HISTORY_TREE_WHITELIST_MISMATCH'
             for name in names:history[commit+':'+name]=git('show',commit+':'+name)
             history[commit+':metadata']=git('show','-s','--format=fuller',commit)
         tracked=git('ls-files').decode().splitlines();assert set(tracked)==allowed,'INDEX_WHITELIST_MISMATCH'
