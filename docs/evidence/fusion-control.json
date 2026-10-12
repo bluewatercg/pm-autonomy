@@ -109,7 +109,7 @@
     "check-03/unconfigured-runtime-http.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "check-03/unconfigured-runtime-http.stdout.log": "80e301504085996006f04ba187c5c8e968f4434eacc9a9546231f53b88cd517b",
     "browser-result.json": "7e25cb1af0c79b797382d918984399300725c68e33095993b969043bfdde389b",
-    "browser-fusion.png": "2d2a2c5d48633be1d79c513cf59060d08590c049d3491bacbda308c8a0bfd91a",
+    "browser-fusion.png": "dec944dd47c6354605f9b6cf6208a8581e58465c895594407f05889e1ddbc465",
     "browser-test.cjs": "a894a72d07f75b81c349c1a8b9b623b9ed7481568e0aff02ef8276e72523c112"
   },
   "source_hashes": {
